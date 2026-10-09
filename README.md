@@ -2,13 +2,13 @@
 
 每天一点，慢慢向前。一个以本机存储为主的 Windows 日历、日记与个人 AI 助手。
 
-**简体中文 · 繁體中文 · English** · Windows 10/11 x64 · v1.6.0 预览版
+**简体中文 · 繁體中文 · English** · Windows 10/11 x64 · v1.7.0 预览版
 
 ## 下载与使用
 
-[下载 Windows 安装包](https://github.com/jgr2021/shiguang/releases/download/v1.6.0/Shiguang-Setup-1.6.0-x64.exe) · [全部下载与版本说明](https://github.com/jgr2021/shiguang/releases/tag/v1.6.0)
+[下载 Windows 安装包](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-Setup-1.7.0-x64.exe) · [全部下载与版本说明](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0)
 
-1. 下载 `Shiguang-Setup-1.6.0-x64.exe` 并安装，从桌面打开拾光。
+1. 下载 `Shiguang-Setup-1.7.0-x64.exe` 并安装，从桌面打开拾光。
 2. 选择日期，记录待办、随记或添加附件；这些功能可以离线使用。
 3. 需要 AI 时，打开 **设置 → AI 服务与 Token 设置**，连接本机 Codex，或选择服务商并填写自己的 API Key。读取模型列表、选择模型后保存，再打开拾光助手。
 
@@ -24,6 +24,7 @@
 | 附件 | 同一文件关联日期范围或多个日期；按内容去重 |
 | 智能查找 | 离线匹配标题、可提取正文、备注和常见同义词 |
 | AI 助手 | 主流服务商引导、官方密钥入口、模型目录、推理强度与独立配置 |
+| AI 写日历 | 起草日期和待办，编辑、勾选、确认后批量写入；草稿可稍后处理 |
 | Codex 连接 | 读取本机登录、模型目录与可用额度；所选模型和推理强度随请求生效 |
 | 简历更新 | 查阅旧简历和后续成果，生成新的 Word 与 Markdown 文件并附来源 |
 | 云文件 | 导出到 Google Drive、OneDrive、Dropbox 等客户端的本机同步文件夹 |
@@ -37,6 +38,16 @@
 
 模型目录不保证账户具有实际调用权限。“检查连接”会发送简短模型请求，可能计费。详细步骤见 [AI 连接指南](AI连接指南.md)。
 
+想先用免费额度，可看 [免费 AI 筛选与连接检查](docs/FREE-AI.md)：优先尝试已有预置的 OpenRouter 免费模型，或通过自定义兼容接口连接 Groq。免费档仍需自己的 Key，并受账户和模型限制。
+
+[DeepSeek 接法与 WorkBuddy 协作可行性](docs/DEEPSEEK-WORKBUDDY.md)：DeepSeek 已有预置；WorkBuddy 需另做开放平台授权与任务连接，当前未实现。
+
+## 用 AI 安排日历
+
+打开拾光助手 → **帮我安排日程** → 写下日期和想做的事 → 编辑 AI 草案 → **确认写入日历**。可以只选部分事项，也可保存草稿稍后处理。已有待办不会自动改动。
+
+聊天按 **Enter 发送、Ctrl+Enter 换行**；输入框随内容伸缩，请求显示已等待时间。备份统一在设置中。
+
 ## 数据与 AI
 
 - 新安装的数据保存在 `%LOCALAPPDATA%\Shiguang\data`；设置中的“打开数据文件夹”可查看实际位置。
@@ -47,7 +58,7 @@
 
 ## 预览版范围
 
-当前安装程序未签名。本版本已编译打包并展示界面，尚未完成全面功能测试、全新电脑安装/卸载测试或真实服务商 API 测试。
+当前安装程序未签名。v1.7 已实测四个 Codex 模型组合的真实问答、AI 日程草案、22项回归测试、三语界面与断网基础功能。其他服务商尚无真实账户调用验证，全新电脑安装/卸载仍待测试。见 [测试与修复记录](docs/QA-v1.7.0.md)。
 
 离线搜索目前采用文本、同义词和相似片段匹配；扫描件没有 OCR。API 模式没有内置网页搜索，应用没有后台实时联网监控、自动更新或跨设备实时同步。Codex 连接供拾光助手使用，尚未自动同步 Codex 其他任务、GitHub 项目或 ChatGPT 网页对话。AI 生成内容需要使用者核对，尤其是简历中的事实、日期和数字。
 
@@ -62,7 +73,7 @@
 
 ## English
 
-Shiguang is an offline-first Windows calendar and journal with date-linked files, local fuzzy search and an optional personal AI assistant. Connect your local Codex sign-in or bring your own API credentials. Version 1.6 adds guided provider setup, model catalogs, explicit Codex model/reasoning choices and OpenAI Responses. The UI supports Simplified Chinese, Traditional Chinese and English. Download the Windows installer from [Releases](https://github.com/jgr2021/shiguang/releases/tag/v1.6.0), or read [Getting Started](Getting-Started.txt).
+Shiguang is an offline-first Windows calendar and journal with date-linked files, local fuzzy search and an optional personal AI assistant. Connect your local Codex sign-in or bring your own API credentials. Version 1.7 adds editable AI calendar drafts, Enter-to-send chat and a fix for Codex CLI discovery when launched from Codex Desktop. The UI supports Simplified Chinese, Traditional Chinese and English. Download the Windows installer from [Releases](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0), or read [Getting Started](Getting-Started.txt).
 
 ## 反馈与许可
 

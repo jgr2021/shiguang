@@ -19,6 +19,10 @@ python -m venv .venv
 .\.venv\Scripts\python.exe desktop_app.py --data-dir .\data\development --language zh-CN
 ```
 
+## 回归测试
+
+在仓库根目录运行 `python -m unittest discover -s tests -v`。测试只使用 `work/qa-v17/` 下的虚构档案和本机 HTTP 模拟服务，不使用个人主档案或真实 API Key；Windows DPAPI 相关测试需要 Windows。
+
 ## 构建程序和 ZIP
 
 ```powershell

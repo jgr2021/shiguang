@@ -61,11 +61,15 @@ class PlannerStore:
         query += " ORDER BY day,done,priority DESC,CASE WHEN at_time='' THEN 1 ELSE 0 END,at_time,created_at,id"
         return [dict(row) for row in self.db.execute(query, parameters)]
 
-    def save_task(self, data, identifier=None, expected_version=None):
+    @staticmethod
+    def validate_task(data):
+        require(isinstance(data, dict), tr('待办内容必须是对象。'))
         day = date_field(data.get("day"))
         title = text_field(data.get("title"), "待办内容").strip()
         require(len(title) <= 240, tr('待办标题请控制在240字以内。'))
-        at_time = data.get("at_time", "").strip()
+        at_time = data.get("at_time", "")
+        require(isinstance(at_time, str), tr('时间格式为 HH:MM，例如 09:30；全天事项可以留空。'))
+        at_time = at_time.strip()
         require(not at_time or re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", at_time), tr('时间格式为 HH:MM，例如 09:30；全天事项可以留空。'))
         priority = data.get("priority", 0)
         require(priority in (0, 1), tr('优先级无效。'))
@@ -73,6 +77,11 @@ class PlannerStore:
         require(isinstance(notes, str) and len(notes) <= 100000, tr('备注最长100000字。'))
         done = data.get("done", 0)
         require(done in (0, 1, False, True), tr('完成状态无效。'))
+        return dict(day=day, title=title, at_time=at_time, priority=int(priority), notes=notes, done=int(done))
+
+    def save_task(self, data, identifier=None, expected_version=None):
+        data = self.validate_task(data)
+        day, title, at_time, priority, notes, done = (data[k] for k in ('day', 'title', 'at_time', 'priority', 'notes', 'done'))
         timestamp = now()
         with self.db:
             if identifier:

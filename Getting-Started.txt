@@ -1,4 +1,4 @@
-Shiguang 1.6.0 · Preview
+Shiguang 1.7.0 · Preview
 A little progress, every day.
 
 GET STARTED
@@ -87,3 +87,6 @@ Windows DPAPI: https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpap
 AI CONNECTIONS IN 1.6
 Codex now reads local sign-in, model catalog and available quota information. Four quick presets: GPT-6 Luna High, GPT-6 Astra Medium, GPT-6 Astra High, GPT-6.1 Sol High. The selected model and reasoning effort are passed to each Codex request without changing global settings. Catalog access does not guarantee successful inference. Other Codex chats and projects are not automatically synced.
 API presets add Gemini, Kimi, OpenRouter and SiliconFlow. Read model lists, choose supported reasoning effort, and keep saved settings separately for each provider. Qwen and Kimi have region selection. Use your own key from the official provider. Connection checks send a small real model request and may be billed.
+
+Version 1.7 — Calendar drafts and chat
+Choose Plan my day to enable calendar drafting. Describe dates and tasks; review, edit and select the generated draft before adding it. Drafts persist across restarts. Existing tasks are not changed. Enter sends; Ctrl+Enter inserts a new line. Export backups from Settings. Codex discovery now distinguishes the CLI from the desktop executable.

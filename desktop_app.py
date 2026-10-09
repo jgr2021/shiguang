@@ -164,7 +164,6 @@ class PlannerApp(tk.Tk):
         names.pack(side="left")
         label(names, tr('拾光日历'), 20, bold=True).pack(anchor="w")
         label(names, tr('每天一点，慢慢向前。'), 9, P["muted"]).pack(anchor="w", pady=(3, 0))
-        button(header, tr('导出备份'), self.backup).pack(side="right")
         button(header, tr('设置'), self.features.settings).pack(side="right", padx=(0, 10))
         self.open_button = button(header, tr('所有待办'), self.all_tasks)
         self.open_button.pack(side="right", padx=(0, 10))
@@ -394,7 +393,7 @@ class PlannerApp(tk.Tk):
                 last_done = task["done"]
             self.task_row(self.tasks_scroll.inner, task)
         completed = sum(task["done"] for task in tasks)
-        self.task_summary.configure(text=tr('{0} / {1} 已完成', completed, len(tasks)) if tasks else tr('这一天还没有安排'))
+        self.task_summary.configure(text=tr('{0} / {1} 已完成', completed, len(tasks)) if tasks else '')
 
     def task_row(self, parent, task, show_date=False, card=False):
         row = tk.Frame(parent, bg=P["paper"], pady=13, padx=10 if card else 0,

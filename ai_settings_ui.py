@@ -102,8 +102,10 @@ class AISettings:
         self.inspect_button.pack(side='left')
         self.login_button = SoftButton(line, tr('在浏览器登录 Codex'), self.login)
         self.login_button.pack(side='left', padx=8)
-        self.field(self.codex_card, tr('Codex 程序位置（留空自动查找）'), 'codex_binary')
-        SoftButton(self.codex_card, tr('选择 codex.exe'), self.pick_binary).pack(anchor='w', pady=5)
+        SoftButton(line, tr('程序位置'), self.toggle_binary).pack(side='right')
+        self.binary_frame = tk.Frame(self.codex_card, bg=P['paper'])
+        self.field(self.binary_frame, tr('Codex 程序位置（留空自动查找）'), 'codex_binary')
+        SoftButton(self.binary_frame, tr('选择 codex.exe'), self.pick_binary).pack(anchor='w', pady=5)
         note(self.codex_card, tr('登录由 Codex 自己管理。拾光不读取、复制或保存 Codex 的登录 Token。'))
         note(self.codex_card, tr('这里连接的是拾光助手；其他 Codex 对话与项目不会因此自动同步。'))
 
@@ -137,6 +139,7 @@ class AISettings:
         self.privacy = tk.StringVar()
         note(self.advanced_card, variable=self.privacy)
         self.fields['base_url'].trace_add('write', self.url_changed)
+        self.fields['codex_binary'].trace_add('write', self.binary_changed)
         self.render()
 
     def name(self):
@@ -157,12 +160,23 @@ class AISettings:
         return validate_ai(self.raw(), complete=complete)
 
     def fingerprint(self):
-        return (self.name(), self.fields['base_url'].get(), self.fields['codex_binary'].get(), self.fields['token'].get())
+        return (self.name(), self.fields['base_url'].get(), self.fields['codex_binary'].get(), self.fields['token'].get(), self.fields['model'].get(), self.fields['reasoning_effort'].get())
 
     def url_changed(self, *args):
+        self.fields['token'].set('')
         self.key_hint.set(tr('留空时仅使用此地址已保存的密钥；首次连接请填写 API Key。'))
         if self.raw()['protocol'] not in {'codex', 'offline'}:
             self.model_note.set(tr('先读取模型列表，或粘贴控制台提供的模型 ID；模型目录不保证实际调用权限。'))
+
+    def binary_changed(self, *args):
+        self.codex_models = {}
+        self.codex_status.set(tr('程序位置已改变，请重新读取 Codex 状态。'))
+
+    def toggle_binary(self):
+        if self.binary_frame.winfo_manager():
+            self.binary_frame.pack_forget()
+        else:
+            self.binary_frame.pack(fill='x', pady=6)
 
     def change_provider(self, event=None):
         # Only non-secret draft fields are retained when switching providers.
@@ -192,16 +206,21 @@ class AISettings:
             self.check_button.configure(state='disabled')
             return
         self.check_button.configure(state='disabled' if self.busy else 'normal')
+        self.check_button.configure(text=tr('读取 Codex 状态') if protocol == 'codex' else tr('检查连接'))
         (self.codex_card if protocol == 'codex' else self.api_card).pack(fill='x', pady=(0, 12))
         self.model_card.pack(fill='x', pady=(0, 12))
         self.advanced_card.pack(fill='x', pady=(0, 12))
         if protocol == 'codex':
+            self.check_button.pack_forget()
+            self.models_button.pack_forget()
             self.quick.pack(fill='x', before=self.model_caption, pady=(0, 8))
             self.model_combo.configure(values=list(self.codex_models) or list(dict.fromkeys(p[1] for p in CODEX_PRESETS)))
             self.model_note.set(tr('快捷组合保留指定模型，不会自动换成其他模型。读取 Codex 状态可刷新目录与支持的强度；最终权限以请求结果为准。'))
             self.advanced.pack_forget()
             self.privacy.set(tr('发送时，Codex 可读取拾光提供的相关资料。模型与推理强度随本次请求传入，不修改 Codex 的全局设置。'))
         else:
+            self.check_button.pack(side='right', padx=10)
+            self.models_button.pack(side='left', padx=(10, 0))
             self.quick.pack_forget()
             self.model_combo.configure(values=['gpt-6-luna', 'gpt-6-astra', 'gpt-6.1-sol'] if self.name() == 'OpenAI' else [])
             self.advanced.pack(fill='x', before=self.advanced_card.winfo_children()[-1])

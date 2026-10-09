@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import queue
 import threading
+import time
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import webbrowser
@@ -67,6 +69,15 @@ class Features:
 
     def poll(self):
         try:
+            self._poll()
+        except Exception:
+            self.app.report_callback_exception(*sys.exc_info())
+        finally:
+            if self.app.winfo_exists():
+                self.poll_job = self.app.after(100, self.poll)
+
+    def _poll(self):
+        try:
             for _ in range(30):
                 kind, data = self.events.get_nowait()
                 if kind == "callback":
@@ -87,19 +98,27 @@ class Features:
                 for _ in range(30):
                     kind, value = self.ai_events.get_nowait()
                     if kind == "progress":
+                        self.ai_progress = value
                         self.chat_status.set(value)
                     elif kind in {"done", "error"}:
                         self.chat_append(tr('助手') if kind == "done" else tr('连接或处理未完成'), value["reply"] if kind == "done" else value)
                         self.chat_status.set(tr('本轮完成，记录已保存在本机') if kind == "done" else tr('可重试；离线记录不受影响'))
                         self.ai = None
                         self.send_button.configure(state="normal")
+                        self.stop_button.configure(state='disabled')
                         if kind == "error" and not self.chat_input.get("1.0", "end-1c").strip():
                             self.chat_input.insert("1.0", getattr(self, "last_question", ""))
                         self.app.refresh()
+                        self.refresh_plans()
+                        if kind == 'done' and value.get('plan_id'):
+                            from calendar_plan_ui import open_plan
+                            open_plan(self, value['plan_id'])
                         break
             except queue.Empty:
                 pass
-        self.poll_job = self.app.after(100, self.poll)
+            if self.ai:
+                elapsed = int(time.monotonic() - self.ai_started)
+                self.chat_status.set(tr('{0} · 已等待 {1} 秒', self.ai_progress, elapsed))
 
     def build_files(self, parent):
         self.file_panel = tk.Frame(parent, bg=BG)
@@ -340,22 +359,35 @@ class Features:
             self.chat_window.deiconify()
             self.chat_window.lift()
             return
-        self.chat_window = top = window(self.app, tr('拾光助手'), "850x740")
-        top.minsize(650, 550)
+        self.chat_window = top = window(self.app, tr('拾光助手'), "880x760")
+        top.minsize(740, 550)
         top.protocol("WM_DELETE_WINDOW", top.withdraw)
-        heading(top, tr('和你的记录聊一聊'), tr('发送后，助手会在线读取拾光里的相关资料；日历、附件与搜索可离线使用。'), tr('拾光助手'))
+        header = tk.Frame(top, bg=P['bg'], padx=22, pady=16)
+        header.pack(fill='x')
+        tk.Label(header, text=tr('拾光助手'), font=(FONT, 19, 'bold'), bg=P['bg'], fg=INK).pack(side='left')
+        action(header, tr('AI 设置'), self.ai_settings).pack(side='right')
         quick = tk.Frame(top, bg=P["bg"])
         quick.pack(fill="x", padx=22, pady=10)
         action(quick, tr('更新我的简历'), lambda: self.set_chat_input(tr('请找到我过去的简历，读取旧简历以及之后直到今天的成果记录，生成一份更新后的简历，附修改依据。请把需要我补充的内容另外列出。')), True).pack(side="left")
         action(quick, tr('回顾最近一周'), lambda: self.set_chat_input(tr('请回顾我最近一周的记录，区分已完成成果、未完成安排和想法，并标出依据。') )).pack(side="left", padx=8)
-        action(quick, tr('打开生成文件夹'), self.open_generated).pack(side="right")
+        action(quick, tr('生成文件'), self.open_generated).pack(side="right")
+        planning = tk.Frame(top, bg=P['bg'])
+        planning.pack(fill='x', padx=22, pady=(0, 10))
+        self.allow_calendar = tk.BooleanVar(value=False)
+        action(planning, tr('帮我安排日程'), self.plan_prompt).pack(side='left')
+        tk.Checkbutton(planning, text=tr('起草日程（确认后写入）'), variable=self.allow_calendar, bg=P['bg'], fg=GREEN, font=(FONT, 9)).pack(side='left', padx=8)
+        self.plans_button = action(planning, tr('日程草稿'), self.show_plans)
+        self.plans_button.pack(side='right')
+        self.refresh_plans()
         composer = tk.Frame(top, bg=P["bg"])
         composer.pack(side="bottom", fill="x")
         area = tk.Frame(top, bg=BG)
         area.pack(fill="both", expand=True, padx=22)
-        self.chat_output = tk.Text(area, wrap="word", font=(FONT, 11), bg=BG, fg=INK, relief="flat", padx=22, pady=18, spacing1=4, spacing3=8, state="disabled")
+        self.chat_output = tk.Text(area, wrap="word", font=(FONT, 11), bg=BG, fg=INK, relief="flat", padx=24, pady=18, spacing1=4, spacing3=8, state="disabled", cursor='arrow')
         self.chat_output.tag_configure("speaker", foreground=GREEN, font=(FONT, 10, "bold"), spacing1=12, spacing3=6)
         self.chat_output.tag_configure("message", foreground=INK, lmargin1=0, lmargin2=0, spacing3=12)
+        self.chat_output.tag_configure('user_name', foreground=GREEN, font=(FONT, 9, 'bold'), justify='right', spacing1=16, spacing3=6)
+        self.chat_output.tag_configure('user_message', foreground=INK, background=P['pale'], lmargin1=80, lmargin2=80, rmargin=12, justify='right', spacing1=6, spacing3=16)
         bar = ttk.Scrollbar(area, command=self.chat_output.yview)
         self.chat_output.configure(yscrollcommand=bar.set)
         bar.pack(side="right", fill="y")
@@ -366,16 +398,21 @@ class Features:
             self.chat_append(tr('助手'), tr('先把旧简历上传到任意一天，再让我更新。你也可以让我查找文件、整理思路或回顾成果。\n旧简历的「内容截止日期」可以帮助我确定补充范围。'))
         self.chat_status = tk.StringVar(value=ai_description(self.app.store))
         tk.Label(composer, textvariable=self.chat_status, bg=P["bg"], fg=MUTED, font=(FONT, 9), anchor="w", wraplength=780, justify="left").pack(fill="x", padx=22, pady=8)
-        self.chat_input = tk.Text(composer, height=3, wrap="word", font=(FONT, 11), relief="flat", bd=0, highlightthickness=1, highlightbackground=P["line"], highlightcolor=GREEN, padx=14, pady=12)
+        self.chat_input = tk.Text(composer, height=2, wrap="word", font=(FONT, 11), relief="flat", bd=0, highlightthickness=1, highlightbackground=P["line"], highlightcolor=GREEN, padx=14, pady=12, undo=True)
         self.chat_input.pack(fill="x", padx=22)
         controls = tk.Frame(composer, bg=P["bg"])
         controls.pack(fill="x", padx=22, pady=12)
-        action(controls, tr('AI 设置'), self.ai_settings).pack(side="left", padx=(0, 10))
-        text(controls, tr('Ctrl+Enter 发送 · 普通 Enter 换行'), 9, MUTED).pack(side="left")
+        text(controls, tr('Enter 发送 · Ctrl+Enter 换行'), 9, MUTED).pack(side="left")
         self.send_button = action(controls, tr('发送'), self.send_chat, True)
         self.send_button.pack(side="right")
-        action(controls, tr('停止'), lambda: self.ai.cancel() if self.ai else None).pack(side="right", padx=8)
-        self.chat_input.bind("<Control-Return>", self.send_chat)
+        self.stop_button = action(controls, tr('停止'), self.stop_chat)
+        self.stop_button.pack(side='right', padx=8)
+        self.stop_button.configure(state='disabled')
+        self.chat_input.bind('<Return>', self.enter_chat)
+        self.chat_input.bind('<Control-Return>', self.newline_chat)
+        self.chat_input.bind('<Shift-Return>', self.newline_chat)
+        self.chat_input.bind('<<Modified>>', self.resize_composer)
+        self.chat_input.bind('<Configure>', self.resize_composer)
 
     def set_chat_input(self, value):
         self.chat_input.delete("1.0", "end")
@@ -384,8 +421,9 @@ class Features:
 
     def chat_append(self, role, body):
         self.chat_output.configure(state="normal")
-        self.chat_output.insert("end", role + "\n", "speaker")
-        self.chat_output.insert("end", body + "\n\n", "message")
+        user = role == tr('你')
+        self.chat_output.insert("end", role + "\n", 'user_name' if user else "speaker")
+        self.chat_output.insert("end", body + "\n\n", 'user_message' if user else "message")
         self.chat_output.configure(state="disabled")
         self.chat_output.see("end")
 
@@ -402,15 +440,58 @@ class Features:
         self.last_question = question
         self.chat_input.delete("1.0", "end")
         self.send_button.configure(state="disabled")
+        self.stop_button.configure(state='normal')
+        self.ai_started = time.monotonic()
+        self.ai_progress = tr('正在连接所选 AI……')
         self.ai_events = queue.Queue()
-        self.ai = AssistantRun(self.app.store.root, question, self.app.selected.isoformat(), self.ai_events)
+        self.ai = AssistantRun(self.app.store.root, question, self.app.selected.isoformat(), self.ai_events, self.allow_calendar.get())
         threading.Thread(target=self.ai.run, daemon=True).start()
         return "break"
+
+    def enter_chat(self, event=None):
+        # Return must first finish an active Chinese IME composition.
+        from chat_keys import ime_composing
+        if ime_composing(self.chat_input):
+            return None
+        return self.send_chat(event)
+
+    def newline_chat(self, event=None):
+        self.chat_input.insert('insert', '\n')
+        self.resize_composer()
+        return 'break'
+
+    def resize_composer(self, event=None):
+        if self.chat_input.edit_modified():
+            self.chat_input.edit_modified(False)
+        count = self.chat_input.count('1.0', 'end', 'displaylines')
+        self.chat_input.configure(height=max(2, min(6, count[0] if count else 2)))
+
+    def stop_chat(self):
+        if self.ai:
+            self.ai_progress = tr('正在停止；已发送的请求可能仍计费。')
+            self.stop_button.configure(state='disabled')
+            self.ai.cancel()
 
     def open_generated(self):
         path = self.app.store.root / "generated"
         path.mkdir(exist_ok=True)
         os.startfile(str(path))
+
+    def plan_prompt(self):
+        self.allow_calendar.set(True)
+        if not self.chat_input.get('1.0', 'end-1c').strip():
+            self.set_chat_input(tr('请帮我起草 {0} 的日程：', self.app.selected.isoformat()))
+        self.chat_input.focus_set()
+
+    def show_plans(self):
+        from calendar_plan_ui import show_plans
+        show_plans(self)
+
+    def refresh_plans(self):
+        button = getattr(self, 'plans_button', None)
+        if button and button.winfo_exists():
+            from calendar_plans import pending_plans
+            button.configure(text=tr('日程草稿 {0}', len(pending_plans(self.app.store))))
 
     def close(self):
         if self.ai:

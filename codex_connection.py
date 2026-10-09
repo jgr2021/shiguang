@@ -7,24 +7,45 @@ import shutil
 import subprocess
 import threading
 import time
+from functools import lru_cache
 
 from localization import tr
 
 
+@lru_cache(maxsize=20)
+def _is_cli(path, modified):
+    try:
+        # Codex Desktop's executable has the same basename. Never launch it as a CLI.
+        candidate = Path(path)
+        if candidate.parent.name.lower() == 'app' and ('windowsapps' in str(candidate).lower() or (candidate.parent / 'resources' / 'app.asar').exists()):
+            return False
+        result = subprocess.run([path, '--version'], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=5, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        return result.returncode == 0 and result.stdout.strip().startswith(b'codex-cli ')
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def find_codex(explicit=''):
+    def usable(path):
+        path = Path(path).expanduser().resolve()
+        return str(path) if path.is_file() and path.suffix.lower() == '.exe' and _is_cli(str(path), path.stat().st_mtime_ns) else None
     if explicit:
-        path = Path(explicit).expanduser()
-        return str(path.resolve()) if path.is_file() and path.suffix.lower() == '.exe' else None
-    native = shutil.which('codex.exe')
-    if native:
-        return native
+        return usable(explicit)
+    # Prefer the actual CLI bundled with Desktop; Windows which() searches CWD first.
     base = Path(os.environ.get('LOCALAPPDATA', '')) / 'OpenAI' / 'Codex' / 'bin'
     candidates = list(base.glob('*/codex.exe')) if base.is_dir() else []
-    if candidates:
-        return str(max(candidates, key=lambda p: p.stat().st_mtime))
+    for path in sorted(candidates, key=lambda p: p.stat().st_mtime, reverse=True):
+        found = usable(path)
+        if found: return found
     npm = Path(os.environ.get('APPDATA', '')) / 'npm' / 'node_modules' / '@openai'
     candidates = list(npm.glob('**/codex.exe')) if npm.is_dir() else []
-    return str(candidates[0]) if candidates else None
+    for directory in os.environ.get('PATH', '').split(os.pathsep):
+        if directory.strip('"'):
+            candidates.append(Path(directory.strip('"')) / 'codex.exe')
+    for path in candidates:
+        found = usable(path)
+        if found: return found
+    return None
 
 
 def model_arguments(config):
@@ -76,7 +97,7 @@ class MetadataClient:
                 event = self.queue.get(timeout=min(1, max(.01, deadline - time.monotonic())))
             except queue.Empty:
                 if self.process.poll() is not None:
-                    break
+                    raise ValueError(tr('Codex 命令行程序提前退出（代码 {0}），未完成 {1}。请确认选择的是 Codex CLI。', self.process.returncode, method))
                 continue
             if event.get('method'):
                 # No approval, credential refresh or tool request is handled by this metadata client.
@@ -86,7 +107,7 @@ class MetadataClient:
                 if 'error' in event:
                     raise ValueError(tr('Codex 未能读取此项信息，请更新 Codex 并确认登录。'))
                 return event.get('result') or {}
-        raise ValueError(tr('读取 Codex 状态超时，请确认 Codex 可以正常打开。'))
+        raise ValueError(tr('读取 Codex 的 {0} 等待超过 {1} 秒，请重试。', method, timeout))
 
     def close(self):
         if self.process.poll() is None:
@@ -109,7 +130,7 @@ def inspect_codex(explicit=''):
         raise ValueError(tr('未找到 Codex。请安装 Codex，或选择 codex.exe 的位置。'))
     client = MetadataClient(binary)
     try:
-        client.call('initialize', {'clientInfo': {'name': 'shiguang', 'title': 'Shiguang', 'version': '1.6.0'}})
+        client.call('initialize', {'clientInfo': {'name': 'shiguang', 'title': 'Shiguang', 'version': '1.7.0'}})
         client.send({'method': 'initialized', 'params': {}})
         account = client.call('account/read', {'refreshToken': False}).get('account') or {}
         models, cursor = [], None

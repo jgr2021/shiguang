@@ -51,7 +51,8 @@ def extract_text(path):
     suffix = path.suffix.lower()
     try:
         if suffix in {".txt", ".md", ".csv", ".tsv", ".json", ".yaml", ".yml", ".log", ".tex", ".rst"}:
-            raw = path.read_bytes()[:TEXT_LIMIT * 4]
+            with path.open('rb') as handle:
+                raw = handle.read(TEXT_LIMIT * 4)
             for encoding in ("utf-8-sig", "gb18030", "utf-16"):
                 try:
                     content = raw.decode(encoding)
@@ -228,7 +229,7 @@ class FileStore(PlannerStore):
             yield {"kind": "附件", "id": item["id"], "day": spans[0][0] if spans else "", "title": item["title"], "body": item["notes"] + "\n" + item["extracted_text"], "tags": item["tags"] + " " + item["original_name"], "dates": spans, "as_of": item["as_of"], "extraction_status": item["extraction_status"]}
         for row in self.db.execute("SELECT * FROM planner_tasks ORDER BY day DESC"):
             item = dict(row)
-            yield {"kind": "待办", "id": item["id"], "day": item["day"], "title": item["title"], "body": item["notes"], "tags": "已完成" if item["done"] else "未完成计划", "done": bool(item["done"])}
+            yield {"kind": "待办", "id": item["id"], "day": item["day"], "at_time": item['at_time'], "priority": item['priority'], "title": item["title"], "body": item["notes"], "tags": "已完成" if item["done"] else "未完成计划", "done": bool(item["done"])}
         for row in self.db.execute("SELECT * FROM planner_notes WHERE trim(body)!='' ORDER BY day DESC"):
             item = dict(row)
             yield {"kind": "草稿", "id": "N" + item["day"], "day": item["day"], "title": item["body"].splitlines()[0][:80], "body": item["body"], "tags": "随记草稿（未归档）"}

@@ -13,7 +13,7 @@ from urllib.parse import urlsplit, urlunsplit
 from diary import atomic_write, require
 from ai_catalog import PRESETS
 
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 
 
 def program_dir():
@@ -69,8 +69,11 @@ def validate_ai(config, complete=True):
     model = str(config.get("model", "")).strip()
     if complete and protocol in {"openai", "responses", "anthropic"}:
         require(bool(model) and len(model) < 200, tr('请填写服务商控制台里的模型名称。'))
-    maximum = int(config.get("max_tokens", 4096))
-    context = int(config.get("context_chars", 60000))
+    try:
+        maximum = int(config.get("max_tokens", 4096))
+        context = int(config.get("context_chars", 60000))
+    except (TypeError, ValueError):
+        raise ValueError(tr('输出和上下文预算请填写整数。')) from None
     require(256 <= maximum <= 32768, tr('最大输出 Token 为256–32768。'))
     require(12000 <= context <= 240000, tr('上下文预算为12000–240000字符。'))
     require(len(model) < 200 and not any(c.isspace() for c in model), tr('模型名称不能包含空格；请使用服务商返回的模型 ID。'))

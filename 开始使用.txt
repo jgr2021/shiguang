@@ -1,4 +1,4 @@
-拾光日历 1.6.0 · 预览版
+拾光日历 1.7.0 · 预览版
 每天一点，慢慢向前。
 
 【安装与开始】
@@ -90,3 +90,6 @@ Windows DPAPI: https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpap
 1.6 AI 连接
 Codex 可读取本机登录、模型目录与额度，提供 GPT-6 Luna High、GPT-6 Astra Medium / High、GPT-6.1 Sol High 四个快捷组合。模型与推理强度会传给本次请求，不修改全局设置。目录不保证实际调用权限，其他 Codex 对话和项目不会自动同步。
 API 服务新增 Gemini、Kimi、OpenRouter、硅基流动，支持模型目录读取、按服务商保存配置、百炼及 Kimi 地域选择。OpenAI 使用 Responses 支持 GPT-6 工具调用。完整连接步骤见 AI连接指南.md。
+
+1.7：AI 日程草案与聊天
+在拾光助手点击「帮我安排日程」，说明日期和要做的事。AI 起草后可以编辑、勾选，点击「确认写入日历」才添加；支持稍后确认，已有待办不自动改动。Enter 发送，Ctrl+Enter 换行。导出备份统一在设置中。修复从 Codex 桌面端启动时把桌面程序误认成 CLI 的连接失败。

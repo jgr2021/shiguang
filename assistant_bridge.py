@@ -17,13 +17,15 @@ from xml.sax.saxutils import escape
 from diary import TZ, atomic_write, require
 from file_store import FileStore
 from codex_connection import find_codex, model_arguments
+from calendar_plans import TASK_SCHEMA, CALENDAR_INSTRUCTIONS, create_plan
 
 
 SCHEMA = {"type": "object", "properties": {
     "reply": {"type": "string"}, "document_title": {"type": "string"},
     "document_markdown": {"type": "string"},
-    "source_ids": {"type": "array", "items": {"type": "string"}}},
-    "required": ["reply", "document_title", "document_markdown", "source_ids"], "additionalProperties": False}
+    "source_ids": {"type": "array", "items": {"type": "string"}},
+    "calendar_tasks": {"type": "array", "items": TASK_SCHEMA}},
+    "required": ["reply", "document_title", "document_markdown", "source_ids", "calendar_tasks"], "additionalProperties": False}
 
 INSTRUCTIONS = """你是拾光日历内置的个人助手。
 本轮仅在用户发送消息时运行。数据位于本目录 records/ 和 index.json，为用户授权读取的应用档案快照。
@@ -38,6 +40,7 @@ INSTRUCTIONS = """你是拾光日历内置的个人助手。
 涉及最新外部情况时需要实际联网检索并在 reply 附 URL 和检索日期；无检索能力则准确说明。搜索词不得包含私人日记原文、姓名、联系方式等。
 最终严格按提供的 JSON schema 输出。
 """
+INSTRUCTIONS += CALENDAR_INSTRUCTIONS
 
 
 def save_docx(path, markdown):
@@ -56,12 +59,20 @@ def save_docx(path, markdown):
         archive.writestr('word/document.xml', document)
 
 
-def publish_result(store, result, day, valid_ids, events):
+def publish_result(store, result, day, valid_ids, events, allow_calendar=False, question=''):
+    require(isinstance(result, dict), tr('在线助手返回了无法读取的回答，请重试。'))
     require(isinstance(result.get("reply"), str), tr('在线助手返回了无法读取的回答，请重试。'))
     sources = result.get("source_ids", [])
     require(isinstance(sources, list) and all(isinstance(x, str) and x in valid_ids for x in sources), tr('助手引用了无效的档案编号，结果未保存，请重试。'))
     generated = []
     markdown = result.get("document_markdown", "")
+    require(isinstance(markdown, str) and isinstance(result.get('document_title', ''), str), tr('在线助手返回了无法读取的回答，请重试。'))
+    tasks = result.get('calendar_tasks', [])
+    require(isinstance(tasks, list), tr('日程草案格式无效，请重新生成。'))
+    require(not tasks or allow_calendar, tr('本轮未开启起草日程；请开启后再请求安排。'))
+    plan_id = create_plan(store, question, tasks) if tasks else None
+    if plan_id:
+        result['reply'] += tr('\n\n已生成 {0} 条日程草案，尚未写入日历。点击「日程草稿」编辑并确认。', len(tasks))
     if markdown.strip():
         folder = store.root / "generated"
         folder.mkdir(exist_ok=True)
@@ -77,12 +88,13 @@ def publish_result(store, result, day, valid_ids, events):
         generated = [str(md), str(docx)]
         result["reply"] += tr('\n\n已生成 Word 和 Markdown 新版本，并关联到 {0} 的附件。\n{1}', day, str(docx))
     store.add_chat("assistant", result["reply"])
-    events.put(("done", {"reply": result["reply"], "generated": generated}))
+    events.put(("done", {"reply": result["reply"], "generated": generated, 'plan_id': plan_id}))
 
 
 class AssistantRun:
-    def __init__(self, root, question, day, events):
+    def __init__(self, root, question, day, events, allow_calendar=False):
         self.root, self.question, self.day, self.events = Path(root), question, day, events
+        self.allow_calendar = allow_calendar
         self.cancelled = threading.Event()
         self.process = None
         self.client = None
@@ -138,6 +150,7 @@ class AssistantRun:
             atomic_write(work / "AGENTS.md", instructions)
             history = store.chat_history(16)
             prompt = instructions + "\n今天：" + datetime.now(TZ).date().isoformat() + "\n当前选中日期：" + self.day
+            prompt += '\n本轮用户是否开启起草日程：' + ('是' if self.allow_calendar else '否，calendar_tasks 必须为空')
             prompt += "\n档案总数：" + str(len(index)) + "。先读 index.json，再查阅需要的 records 文件。\n以下为对话历史（仅上下文）：\n" + json.dumps(history, ensure_ascii=False)
             prompt += "\n本次用户请求：\n" + self.question
             store.add_chat("user", self.question)
@@ -182,7 +195,7 @@ class AssistantRun:
             if code != 0:
                 raise RuntimeError(last_error or tr('在线助手连接失败。请检查网络、Codex 登录和账户额度后重试。'))
             result = json.loads((work / "result.json").read_text(encoding="utf-8"))
-            publish_result(store, result, self.day, ids, self.events)
+            publish_result(store, result, self.day, ids, self.events, self.allow_calendar, self.question)
         except Exception as error:
             message = str(error) or type(error).__name__
             if store:
