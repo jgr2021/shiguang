@@ -11,19 +11,9 @@ import sys
 from urllib.parse import urlsplit, urlunsplit
 
 from diary import atomic_write, require
+from ai_catalog import PRESETS
 
-VERSION = "1.5.0"
-PRESETS = {
-    "OpenAI": ("openai", "https://api.openai.com/v1", "https://platform.openai.com/api-keys"),
-    "DeepSeek": ("openai", "https://api.deepseek.com", "https://platform.deepseek.com/api_keys"),
-    "通义千问 / 百炼": ("openai", "https://dashscope.aliyuncs.com/compatible-mode/v1", "https://help.aliyun.com/zh/model-studio/base-url"),
-    "Claude / Anthropic": ("anthropic", "https://api.anthropic.com/v1", "https://platform.claude.com/"),
-    "自定义 OpenAI 兼容": ("openai", "", ""),
-    "自定义 Claude 兼容": ("anthropic", "", ""),
-    "本机模型（OpenAI 兼容）": ("openai", "http://127.0.0.1:11434/v1", ""),
-    "本机 Codex 登录": ("codex", "", ""),
-    "仅离线使用": ("offline", "", ""),
-}
+VERSION = "1.6.0"
 
 
 def program_dir():
@@ -54,7 +44,8 @@ def normalize_url(value):
     require(not any(c.isspace() for c in value), tr('API 地址不能包含空白字符。'))
     _ = p.port
     path = p.path.rstrip("/")
-    for suffix in ("/chat/completions", "/messages"):
+    require(not any(c in value for c in '{}<>'), tr('请将地址中的业务空间或其他占位符替换为控制台的实际值。'))
+    for suffix in ("/chat/completions", "/messages", "/responses", "/models"):
         if path.endswith(suffix):
             path = path[:-len(suffix)]
     return urlunsplit((p.scheme.lower(), p.netloc.lower(), path, "", ""))
@@ -66,26 +57,39 @@ def load_ai(store):
         return validate_ai(json.loads(raw), complete=False)
     # Preserve the previous owner's explicitly available workflow only in legacy folders.
     legacy = (store.root / "AGENT.md").exists()
-    return {"provider": "本机 Codex 登录" if legacy else "仅离线使用", "protocol": "codex" if legacy else "offline", "base_url": "", "model": "", "max_tokens": 4096, "context_chars": 60000, "tools": True}
+    return {"provider": "本机 Codex 登录" if legacy else "仅离线使用", "protocol": "codex" if legacy else "offline", "base_url": "", "model": "", "reasoning_effort": "auto", "codex_binary": "", "max_tokens": 4096, "context_chars": 60000, "tools": True}
 
 
 def validate_ai(config, complete=True):
     protocol = config.get("protocol", "offline")
-    require(protocol in {"offline", "codex", "openai", "anthropic"}, tr('不支持的 AI 接口类型。'))
-    base = normalize_url(config.get("base_url", "")) if protocol in {"openai", "anthropic"} else ""
+    require(protocol in {"offline", "codex", "openai", "responses", "anthropic"}, tr('不支持的 AI 接口类型。'))
+    base = normalize_url(config.get("base_url", "")) if protocol in {"openai", "responses", "anthropic"} else ""
+    if config.get('provider') == 'OpenAI' and base == 'https://api.openai.com/v1' and protocol == 'openai':
+        protocol = 'responses'
     model = str(config.get("model", "")).strip()
-    if complete and protocol in {"openai", "anthropic"}:
+    if complete and protocol in {"openai", "responses", "anthropic"}:
         require(bool(model) and len(model) < 200, tr('请填写服务商控制台里的模型名称。'))
     maximum = int(config.get("max_tokens", 4096))
     context = int(config.get("context_chars", 60000))
     require(256 <= maximum <= 32768, tr('最大输出 Token 为256–32768。'))
     require(12000 <= context <= 240000, tr('上下文预算为12000–240000字符。'))
+    require(len(model) < 200 and not any(c.isspace() for c in model), tr('模型名称不能包含空格；请使用服务商返回的模型 ID。'))
+    effort = config.get('reasoning_effort', 'auto')
+    require(effort in {'auto', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra'}, tr('不支持的推理强度。'))
+    if protocol == 'anthropic':
+        effort = 'auto'
+    if base == 'https://api.openai.com/v1' and protocol == 'responses' and model in {'gpt-6-astra', 'gpt-6.1-sol'}:
+        require(effort not in {'none', 'minimal', 'ultra'}, tr('此 API 模型不支持所选推理强度，请选择 low、medium、high、xhigh 或 max。'))
+    if base == 'https://api.openai.com/v1' and protocol == 'responses' and model == 'gpt-6-luna':
+        require(effort not in {'minimal', 'ultra'}, tr('此 API 模型不支持所选推理强度，请选择 low、medium、high、xhigh 或 max。'))
     return {"provider": str(config.get("provider", "自定义 OpenAI 兼容")), "protocol": protocol, "base_url": base,
-            "model": model, "max_tokens": maximum, "context_chars": context, "tools": bool(config.get("tools", True))}
+            "model": model, "reasoning_effort": effort, "codex_binary": str(config.get('codex_binary', '')).strip(),
+            "max_tokens": maximum, "context_chars": context, "tools": bool(config.get("tools", True))}
 
 
 def credential_id(config):
-    return hashlib.sha256((config["protocol"] + "|" + config["base_url"]).encode()).hexdigest()
+    protocol = 'openai' if config['protocol'] == 'responses' else config['protocol']
+    return hashlib.sha256((protocol + "|" + config["base_url"]).encode()).hexdigest()
 
 
 class Blob(ctypes.Structure):
@@ -141,7 +145,7 @@ def ai_description(store):
         if config["protocol"] == "offline":
             return tr('尚未设置在线 AI · 点击「AI 设置」填写自己的 Token')
         if config["protocol"] == "codex":
-            return tr('本机 Codex 登录 · 按该账户额度使用')
-        return tr(config["provider"]) + " · " + (config["model"] or tr('未填写模型')) + tr(' · 费用由服务商收取')
+            return 'Codex · ' + (config['model'] or tr('沿用 Codex 默认模型')) + ' · ' + config.get('reasoning_effort', 'auto')
+        return tr(config["provider"]) + " · " + (config["model"] or tr('未填写模型')) + ' · ' + config.get('reasoning_effort', 'auto') + tr(' · 费用由服务商收取')
     except Exception:
         return tr('AI 配置需要重新设置')

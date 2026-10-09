@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -14,6 +15,8 @@ def main():
     parser.add_argument("--binary-dir", required=True)
     parser.add_argument("--stage", required=True)
     parser.add_argument("--release", required=True)
+    parser.add_argument("--link-runtime", action="store_true", help="Hard-link build files into staging on the same drive")
+    parser.add_argument("--no-zip", action="store_true", help="Only assemble the clean staging directory")
     args = parser.parse_args()
     source = Path(__file__).resolve().parent.parent
     binary = Path(args.binary_dir).resolve()
@@ -23,14 +26,16 @@ def main():
         raise SystemExit("Use a new empty staging directory for each release.")
     stage.mkdir(parents=True)
     release.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(binary / "Shiguang.exe", stage / "Shiguang.exe")
+    copy_program = os.link if args.link_runtime else shutil.copy2
+    copy_program(binary / "Shiguang.exe", stage / "Shiguang.exe")
     def ignore(folder, names):
         return [n for n in names if n in {"direct_url.json", "RECORD", "INSTALLER", "REQUESTED"}]
-    shutil.copytree(binary / "_internal", stage / "_internal", ignore=ignore)
+    shutil.copytree(binary / "_internal", stage / "_internal", ignore=ignore, copy_function=copy_program)
     shutil.copy2(source / "shiguang.ico", stage / "shiguang.ico")
     # Inno 6 requires a BOM for unambiguous Unicode text.
     for name in ("开始使用.txt", "開始使用.txt", "Getting-Started.txt"):
         (stage / name).write_text((source / name).read_text(encoding="utf-8"), encoding="utf-8-sig")
+    shutil.copy2(source / 'AI连接指南.md', stage / 'AI连接指南.md')
     licenses = stage / "licenses"
     licenses.mkdir()
     distributions = ["pypdf", "cryptography", "cffi", "pycparser", "Pillow", "brotlicffi", "typing_extensions", "packaging", "setuptools", "importlib_metadata", "zipp", "more-itertools", "jaraco.functools", "jaraco.context", "jaraco.text", "backports.tarfile", "platformdirs", "pyreadline3", "colorama", "pyinstaller", "altgraph", "pefile", "pywin32-ctypes"]
@@ -59,15 +64,16 @@ def main():
         if any(part in forbidden for part in path.relative_to(stage).parts) or path.suffix.lower() in {".sqlite3", ".db", ".log"}:
             raise SystemExit("Private-data path found in release payload: " + path.name)
     manifest = [{"path": p.relative_to(stage).as_posix(), "bytes": p.stat().st_size, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths if p.is_file()]
-    (stage / "release-manifest.json").write_text(json.dumps({"version": "1.5.0", "languages": ["zh-CN", "zh-TW", "en"], "payload": "program-only", "personal_data_included": False, "files": manifest}, ensure_ascii=False, indent=2), encoding="utf-8")
-    portable = release / "Shiguang-1.5.0-Windows-x64.zip"
-    with zipfile.ZipFile(portable, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        for path in sorted(stage.rglob("*")):
-            if path.is_file():
-                archive.write(path, "Shiguang/" + path.relative_to(stage).as_posix())
+    (stage / "release-manifest.json").write_text(json.dumps({"version": "1.6.0", "languages": ["zh-CN", "zh-TW", "en"], "payload": "program-only", "personal_data_included": False, "files": manifest}, ensure_ascii=False, indent=2), encoding="utf-8")
+    portable = release / "Shiguang-1.6.0-Windows-x64.zip"
+    if not args.no_zip:
+        with zipfile.ZipFile(portable, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+            for path in sorted(stage.rglob("*")):
+                if path.is_file():
+                    archive.write(path, "Shiguang/" + path.relative_to(stage).as_posix())
     for name in ("开始使用.txt", "開始使用.txt", "Getting-Started.txt"):
         shutil.copy2(stage / name, release / name)
-    print(json.dumps({"stage": str(stage), "files": len(manifest), "personal_data_included": False, "portable": str(portable), "zip_bytes": portable.stat().st_size}, ensure_ascii=False))
+    print(json.dumps({"stage": str(stage), "files": len(manifest), "personal_data_included": False, "portable": str(portable) if not args.no_zip else None, "zip_bytes": portable.stat().st_size if not args.no_zip else 0}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

@@ -16,20 +16,7 @@ from xml.sax.saxutils import escape
 
 from diary import TZ, atomic_write, require
 from file_store import FileStore
-
-
-def find_codex():
-    native = shutil.which("codex.exe")
-    if native:
-        return native
-    base = Path(os.environ.get("LOCALAPPDATA", "")) / "OpenAI" / "Codex" / "bin"
-    candidates = list(base.glob("*/codex.exe")) if base.is_dir() else []
-    if candidates:
-        return str(max(candidates, key=lambda p: p.stat().st_mtime))
-    # Prefer the native binary; .cmd wrappers are not run through a shell.
-    npm = Path(os.environ.get("APPDATA", "")) / "npm" / "node_modules" / "@openai"
-    candidates = list(npm.glob("**/codex.exe")) if npm.is_dir() else []
-    return str(candidates[0]) if candidates else None
+from codex_connection import find_codex, model_arguments
 
 
 SCHEMA = {"type": "object", "properties": {
@@ -129,9 +116,11 @@ class AssistantRun:
         store = None
         work = None
         try:
-            binary = find_codex()
-            require(binary is not None, tr('未找到 Codex。请安装并登录 Codex 后重试；离线日历和搜索仍可使用。'))
             store = FileStore(self.root)
+            from app_config import load_ai
+            config = load_ai(store)
+            binary = find_codex(config.get('codex_binary', ''))
+            require(binary is not None, tr('未找到 Codex。请安装并登录 Codex 后重试；离线日历和搜索仍可使用。'))
             work = self.root / "vault" / "assistant-runs" / (datetime.now(TZ).strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8])
             records_dir = work / "records"
             records_dir.mkdir(parents=True)
@@ -153,8 +142,8 @@ class AssistantRun:
             prompt += "\n本次用户请求：\n" + self.question
             store.add_chat("user", self.question)
             # Read-only sandbox. Results are returned as data and saved by this application.
-            args = [binary, "exec", "--json", "--ephemeral", "--skip-git-repo-check", "--sandbox", "read-only", "--color", "never", "-C", str(work), "--output-schema", str(work / "schema.json"), "-o", str(work / "result.json"), "-"]
-            self.events.put(("progress", tr('正在连接在线助手；使用本机 Codex 登录……')))
+            args = [binary, "exec", "--json", "--ephemeral", "--skip-git-repo-check", "--sandbox", "read-only", "--color", "never"] + model_arguments(config) + ["-C", str(work), "--output-schema", str(work / "schema.json"), "-o", str(work / "result.json"), "-"]
+            self.events.put(("progress", tr('正在连接 Codex：{0} · {1}', config['model'] or tr('沿用 Codex 默认模型'), config.get('reasoning_effort', 'auto'))))
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
             if self.cancelled.is_set():

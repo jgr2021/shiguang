@@ -7,7 +7,7 @@ import socket
 import threading
 import time
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlencode
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 from app_config import Credentials, load_ai, validate_ai
@@ -21,8 +21,8 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class ModelClient:
-    def __init__(self, config, key, cancelled=None):
-        self.config = validate_ai(config)
+    def __init__(self, config, key, cancelled=None, complete=True):
+        self.config = validate_ai(config, complete=complete)
         require(isinstance(key, str) and len(key) <= 8192 and not any(c.isspace() for c in key), tr('Token 格式不正确，不能包含空白字符。'))
         self.key = key
         self.cancelled = cancelled or threading.Event()
@@ -37,18 +37,18 @@ class ModelClient:
             except Exception:
                 pass
 
-    def post(self, payload):
+    def request(self, path, payload=None):
         if self.cancelled.is_set():
             raise InterruptedError(tr('已停止；已发送的请求可能仍按服务商规则计费。'))
         native = self.config["protocol"] == "anthropic"
-        endpoint = self.config["base_url"] + ("/messages" if native else "/chat/completions")
-        headers = {"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "Shiguang/1.4"}
+        endpoint = self.config["base_url"] + path
+        headers = {"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "Shiguang/1.6"}
         if native:
             headers.update({"x-api-key": self.key, "anthropic-version": "2023-06-01"})
         elif self.key:
             headers["Authorization"] = "Bearer " + self.key
         try:
-            request = Request(endpoint, json.dumps(payload, ensure_ascii=False).encode("utf-8"), headers, method="POST")
+            request = Request(endpoint, json.dumps(payload, ensure_ascii=False).encode("utf-8") if payload is not None else None, headers, method="POST" if payload is not None else "GET")
             self.usage["requests"] += 1
             self.response = build_opener(NoRedirect()).open(request, timeout=60)
             with self.response as response:
@@ -75,8 +75,16 @@ class ModelClient:
 
     def complete(self, system, messages, tools=None):
         native = self.config["protocol"] == "anthropic"
+        responses = self.config['protocol'] == 'responses'
+        effort = self.config.get('reasoning_effort', 'auto')
         payload = {"model": self.config["model"], "stream": False}
-        if native:
+        if responses:
+            payload.update(instructions=system, input=messages, max_output_tokens=self.config['max_tokens'], store=False, include=['reasoning.encrypted_content'])
+            if effort != 'auto':
+                payload['reasoning'] = {'effort': effort}
+            if tools:
+                payload['tools'] = [dict(type='function', strict=False, **t) for t in tools]
+        elif native:
             payload.update(system=system, messages=messages, max_tokens=self.config["max_tokens"])
             if tools:
                 payload["tools"] = [{"name": t["name"], "description": t["description"], "input_schema": t["parameters"]} for t in tools]
@@ -84,9 +92,36 @@ class ModelClient:
             payload["messages"] = [{"role": "system", "content": system}] + messages
             limit_key = "max_completion_tokens" if urlsplit(self.config["base_url"]).hostname == "api.openai.com" else "max_tokens"
             payload[limit_key] = self.config["max_tokens"]
+            if effort != 'auto':
+                if urlsplit(self.config['base_url']).hostname == 'openrouter.ai':
+                    payload['reasoning'] = {'effort': effort}
+                else:
+                    payload['reasoning_effort'] = effort
             if tools:
                 payload["tools"] = [{"type": "function", "function": t} for t in tools]
-        return self.post(payload)
+        return self.request('/responses' if responses else '/messages' if native else '/chat/completions', payload)
+
+    def models(self):
+        rows, cursor, complete = [], None, True
+        for _ in range(10):
+            query = {'limit': 100} if self.config['protocol'] == 'anthropic' else {}
+            if cursor:
+                query['after_id'] = cursor
+            data = self.request('/models' + ('?' + urlencode(query) if query else ''))
+            for item in data.get('data', []):
+                identifier = item.get('id')
+                if isinstance(identifier, str) and 0 < len(identifier) < 200 and not any(c.isspace() for c in identifier):
+                    rows.append(identifier)
+            if not data.get('has_more'):
+                break
+            cursor = data.get('last_id')
+            if not cursor:
+                complete = False
+                break
+        else:
+            complete = False
+        require(bool(rows), tr('服务商没有返回模型列表，可从官方控制台复制模型 ID。'))
+        return {'models': list(dict.fromkeys(rows)), 'complete': complete}
 
 
 TOOLS = [
@@ -198,6 +233,7 @@ def run_api(owner):
         messages = history + [{"role": "user", "content": request}]
         store.add_chat("user", owner.question)
         native = config["protocol"] == "anthropic"
+        responses = config['protocol'] == 'responses'
         started = time.monotonic()
         for round_number in range(13):
             if owner.cancelled.is_set():
@@ -207,7 +243,22 @@ def run_api(owner):
             owner.events.put(("progress", tr('正在使用 {0} · 第 {1} 次请求……', config['provider'], round_number + 1)))
             tools = TOOLS if config["tools"] and round_number < 12 else None
             response = client.complete(system, messages, tools)
-            if native:
+            if responses:
+                require(response.get('status') not in {'failed', 'cancelled', 'incomplete'}, tr('模型输出未完成，请增加输出预算或缩小问题范围后重试。'))
+                output = response.get('output') or []
+                calls = [item for item in output if item.get('type') == 'function_call']
+                final = '\n'.join(part.get('text', part.get('refusal', '')) for item in output if item.get('type') == 'message' for part in item.get('content', []) if part.get('type') in {'output_text', 'refusal'})
+                if calls:
+                    require(len(calls) <= 12, tr('模型一次请求过多工具，已停止。'))
+                    messages.extend(output)
+                    for call in calls:
+                        try:
+                            args = json.loads(call.get('arguments', ''))
+                        except (ValueError, TypeError):
+                            args = None
+                        value = archive.call(call.get('name'), args)
+                        messages.append({'type': 'function_call_output', 'call_id': call['call_id'], 'output': json.dumps(value, ensure_ascii=False)})
+            elif native:
                 content = response.get("content", [])
                 require(response.get("stop_reason") != "max_tokens", tr('模型输出达到长度上限，请在 AI 设置里增加最大输出 Token。'))
                 calls = [b for b in content if b.get("type") == "tool_use"]
@@ -268,9 +319,18 @@ def run_api(owner):
 
 
 def connection_check(config, key):
-    config = dict(validate_ai(config), max_tokens=256)
-    require(config["protocol"] in {"openai", "anthropic"}, tr('此检查用于 API 接口；Codex 登录请在 Codex 中完成。'))
+    config = dict(validate_ai(config), max_tokens=4096)
+    require(config["protocol"] in {"openai", "responses", "anthropic"}, tr('此检查用于 API 接口；Codex 登录请在 Codex 中完成。'))
     client = ModelClient(config, key)
     result = client.complete("仅回复 OK。", [{"role": "user", "content": "连接检查，请回复 OK。"}])
-    require(bool(result.get("content") or result.get("choices")), tr('已收到响应，但没有模型回答。'))
+    if config['protocol'] == 'responses':
+        answered = result.get('status') == 'completed' and any(x.get('type') == 'message' and x.get('content') for x in result.get('output', []))
+    else:
+        answered = bool(result.get('content') or result.get('choices'))
+    require(answered, tr('已收到响应，但没有模型回答。'))
     return tr('已收到模型响应。只发送了连接检查文本，没有发送你的档案。')
+
+
+def fetch_models(config, key):
+    client = ModelClient(config, key, complete=False)
+    return client.models()

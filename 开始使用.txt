@@ -1,4 +1,4 @@
-拾光日历 1.5.0 · 预览版
+拾光日历 1.6.0 · 预览版
 每天一点，慢慢向前。
 
 【安装与开始】
@@ -30,12 +30,12 @@
 4. 可点击“检查连接”：只发送简短检查文本，可能产生少量费用，不发送档案。
 5. 打开“拾光助手”，输入问题，或点击“更新我的简历”后发送。
 
-预置 OpenAI、DeepSeek、通义千问/百炼、Claude/Anthropic。
+预置 OpenAI、Claude、Gemini、DeepSeek、通义千问/百炼、Kimi、OpenRouter 和硅基流动。
 可接入自定义 OpenAI Chat Completions 兼容接口、Claude Messages 兼容接口。
 本机模型可填写本机 OpenAI 兼容服务地址（如 http://127.0.0.1:11434/v1）。
 必须选择服务商实际开放的模型，API 地址和账户地域需匹配。
 并非所有第三方网关或模型都兼容；返回400时可检查模型/地址，或关闭“分步检索”。
-仅支持 Responses 的接口不能直接当作 Chat Completions 接口使用。
+仅支持 Responses 的接口请选择自定义 Responses 兼容；OpenAI 默认使用 Responses。
 ChatGPT/Claude 等网页会员登录凭据不是此处的 API Token。
 “本机 Codex 登录”是可选路径，需使用者自行安装并登录 Codex。
 
@@ -86,3 +86,7 @@ DeepSeek: https://api-docs.deepseek.com/
 Claude: https://platform.claude.com/docs/en/api/messages/create
 百炼: https://help.aliyun.com/zh/model-studio/base-url
 Windows DPAPI: https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata
+
+1.6 AI 连接
+Codex 可读取本机登录、模型目录与额度，提供 GPT-6 Luna High、GPT-6 Astra Medium / High、GPT-6.1 Sol High 四个快捷组合。模型与推理强度会传给本次请求，不修改全局设置。目录不保证实际调用权限，其他 Codex 对话和项目不会自动同步。
+API 服务新增 Gemini、Kimi、OpenRouter、硅基流动，支持模型目录读取、按服务商保存配置、百炼及 Kimi 地域选择。OpenAI 使用 Responses 支持 GPT-6 工具调用。完整连接步骤见 AI连接指南.md。

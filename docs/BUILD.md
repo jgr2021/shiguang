@@ -29,6 +29,8 @@ python -m venv .venv
 
 `release-stage` 必须是不存在的新目录。它按程序文件白名单组装并生成 SHA-256 清单，复制使用指南和第三方许可；不要把个人安装目录整体压缩发布。
 
+同一磁盘空间有限时，可加 `--link-runtime` 用硬链接组装程序运行库；之后不要修改构建产物。`--no-zip` 可只生成分发目录，供安装器使用。
+
 ## Windows 安装器
 
 使用 Inno Setup 6.x 的 `ISCC.exe`，另备兼容该版本的简体及繁体中文 `.isl` 语言文件。当前发布使用 Inno Setup 6.7.3。
@@ -57,6 +59,8 @@ $issBomPath = Join-Path (Resolve-Path build).Path 'Shiguang.iss'
 | ui_extras.py / settings_ui.py | 附件、搜索、聊天、设置 |
 | diary.py / planner_store.py / file_store.py | 本机 SQLite、日记、待办与附件 |
 | app_config.py | 默认设置、数据目录与 DPAPI 凭据 |
+| ai_settings_ui.py / ai_catalog.py | AI 接入向导、服务商和模型组合 |
+| codex_connection.py | Codex 元数据、登录与模型参数 |
 | api_assistant.py / assistant_bridge.py | API 与可选 Codex 助手适配 |
 | localization.py / translations.py | 三语界面 |
 | packaging/ | 程序包与安装器构建 |

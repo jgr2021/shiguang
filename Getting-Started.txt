@@ -1,4 +1,4 @@
-Shiguang 1.5.0 · Preview
+Shiguang 1.6.0 · Preview
 A little progress, every day.
 
 GET STARTED
@@ -34,7 +34,7 @@ Presets include OpenAI, DeepSeek, Qwen / Model Studio and Claude / Anthropic.
 Custom OpenAI Chat Completions and Claude Messages compatible endpoints are supported.
 For a local model, supply a local OpenAI-compatible endpoint, such as http://127.0.0.1:11434/v1.
 Use the model and regional URL enabled for your account. Compatibility varies by gateway and model.
-If tools are unsupported, turn off step-by-step retrieval. Responses-only APIs cannot be used as Chat Completions endpoints.
+If tools are unsupported, turn off step-by-step retrieval. Select the Responses-compatible connection for a Responses endpoint; the OpenAI preset now uses Responses for GPT-6 tools.
 Web subscription credentials are not API tokens. Local Codex sign-in is optional and requires your own Codex installation and login.
 
 REQUESTS AND COST
@@ -83,3 +83,7 @@ DeepSeek: https://api-docs.deepseek.com/
 Claude: https://platform.claude.com/docs/en/api/messages/create
 Qwen: https://help.aliyun.com/zh/model-studio/base-url
 Windows DPAPI: https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata
+
+AI CONNECTIONS IN 1.6
+Codex now reads local sign-in, model catalog and available quota information. Four quick presets: GPT-6 Luna High, GPT-6 Astra Medium, GPT-6 Astra High, GPT-6.1 Sol High. The selected model and reasoning effort are passed to each Codex request without changing global settings. Catalog access does not guarantee successful inference. Other Codex chats and projects are not automatically synced.
+API presets add Gemini, Kimi, OpenRouter and SiliconFlow. Read model lists, choose supported reasoning effort, and keep saved settings separately for each provider. Qwen and Kimi have region selection. Use your own key from the official provider. Connection checks send a small real model request and may be billed.
