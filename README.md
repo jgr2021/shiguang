@@ -1,82 +1,115 @@
-# 拾光 Shiguang
+<div align="center">
 
-每天一点，慢慢向前。一个以本机存储为主的 Windows 日历、日记与个人 AI 助手。
+![拾光 Shiguang：安排今天，记住生活](docs/media/hero.svg)
 
-**简体中文 · 繁體中文 · English** · Windows 10/11 x64 · v1.7.0 预览版
+**一个放在电脑里的日历、日记本和资料夹。**
 
-## 下载与使用
+记下要做的事、突然的想法和每天的小小进展。没有网络，也能继续记录。
 
-[下载 Windows 安装包](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-Setup-1.7.0-x64.exe) · [全部下载与版本说明](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0)
+[**⬇ 下载 Windows 安装版 · v1.7**](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-Setup-1.7.0-x64.exe)
 
-1. 下载 `Shiguang-Setup-1.7.0-x64.exe` 并安装，从桌面打开拾光。
-2. 选择日期，记录待办、随记或添加附件；这些功能可以离线使用。
-3. 需要 AI 时，打开 **设置 → AI 服务与 Token 设置**，连接本机 Codex，或选择服务商并填写自己的 API Key。读取模型列表、选择模型后保存，再打开拾光助手。
+[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-1.7.0-Windows-x64.zip)
 
-无需安装 Python。API 模式无需 Codex。也可下载 ZIP，完整解压后运行 `Shiguang.exe`；运行库文件夹必须保留。
+Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
-## 可以做什么
+简体中文 · [繁體中文](docs/README.zh-TW.md) · [English](docs/README.en.md)
 
-| 功能 | 当前实现 |
+</div>
+
+![拾光真实界面：月历、今天的待办、完成进度](docs/media/app-calendar.png)
+
+<sub>v1.7 实际运行界面，内容均为虚构示例。你的记录由你自己填写。</sub>
+
+## 让拾光陪你过一个普通的日子
+
+| 什么时候 | 可以做什么 |
 | --- | --- |
-| 每日日历 | 今日醒目标记、一键回到今天、待办时间与重要程度 |
-| 待办总览 | 今天、未来7天、已过期、已完成筛选，按日期分组 |
-| 日记 | 本机自动保存草稿，明确归档后保留原文快照 |
-| 附件 | 同一文件关联日期范围或多个日期；按内容去重 |
-| 智能查找 | 离线匹配标题、可提取正文、备注和常见同义词 |
-| AI 助手 | 主流服务商引导、官方密钥入口、模型目录、推理强度与独立配置 |
-| AI 写日历 | 起草日期和待办，编辑、勾选、确认后批量写入；草稿可稍后处理 |
-| Codex 连接 | 读取本机登录、模型目录与可用额度；所选模型和推理强度随请求生效 |
-| 简历更新 | 查阅旧简历和后续成果，生成新的 Word 与 Markdown 文件并附来源 |
-| 云文件 | 导出到 Google Drive、OneDrive、Dropbox 等客户端的本机同步文件夹 |
-| 三语界面 | 简体中文、繁體中文、English，可在设置中切换 |
+| **早上，事情有点多** | 点“回到今天”，写下今天要做的几件事。重要的标一下，有约定的加上时间。 |
+| **白天，想到了一点什么** | 在“当天日记”写一句话。读书笔记、工作进展、生活小事都可以，草稿会自动保存。 |
+| **准备出行或推进一个项目** | 把清单、文档放到相关日期。同一个文件，可以在多个日期查看。 |
+| **周末，想看看最近过得怎样** | 翻一翻日历、搜索旧记录；连接 AI 后，也可以请助手根据记录帮你回顾。 |
 
-## 连接你常用的 AI
+不用每天写得很完整。从今天的一件小事开始，就够了。
 
-**已经在用 Codex：** 选择“本机 Codex 登录”→ 读取状态 → 选择快捷组合 → 保存并使用。支持 **GPT-6 Luna · High、GPT-6 Astra · Medium / High、GPT-6.1 Sol · High**，也可从本机目录选取其他模型及支持的推理强度。无需复制 Codex 登录 Token。
+## 第一次用，做这三步
 
-**使用自己的 API Key：** 预置 OpenAI、Claude、Google Gemini、DeepSeek、通义千问、Kimi、OpenRouter、硅基流动；提供官方密钥入口、地域选择与模型目录。OpenAI 使用 Responses，其他连接支持 Chat Completions 或 Claude Messages；可添加自定义兼容接口。
+1. **下载安装。** 点上方“下载 Windows 安装版”，完成安装后打开“拾光日历”。不用下载源码，也不用安装 Python。
+2. **记下一件事。** 欢迎页选“先开始记录”，点“回到今天”，在待办输入框写下“晚上散步”，按 Enter 添加。
+3. **留下一句话。** 切到“当天日记”，写下今天的一个想法，看到“已保存到本机”即可。
 
-模型目录不保证账户具有实际调用权限。“检查连接”会发送简短模型请求，可能计费。详细步骤见 [AI 连接指南](AI连接指南.md)。
+这三步都不需要配置 AI。完整图文步骤见 **[第一次使用](docs/QUICKSTART.md)**。
 
-想先用免费额度，可看 [免费 AI 筛选与连接检查](docs/FREE-AI.md)：优先尝试已有预置的 OpenRouter 免费模型，或通过自定义兼容接口连接 Groq。免费档仍需自己的 Key，并受账户和模型限制。
+## 日历之外，给生活多留一点余地
 
-[DeepSeek 接法与 WorkBuddy 协作可行性](docs/DEEPSEEK-WORKBUDDY.md)：DeepSeek 已有预置；WorkBuddy 需另做开放平台授权与任务连接，当前未实现。
+- **事情记在一起。** 查看今天、未来7天、过期或已完成的待办。
+- **资料跟着日期走。** 同一份附件关联多天，旅行清单、课程资料、项目文档都能找回来。
+- **想不起完整标题，也能找找看。** 搜索标题、备注、可提取正文及常见近义词；目前不是语义向量搜索。
+- **写完以后，仍然属于你。** 日记与待办存于本机；设置里可以导出完整备份。
+- **用习惯的语言。** 简体中文、繁體中文和 English 可在设置里切换。
 
-## 用 AI 安排日历
+<details>
+<summary><b>再看两张实际界面：日记与待办总览</b></summary>
 
-打开拾光助手 → **帮我安排日程** → 写下日期和想做的事 → 编辑 AI 草案 → **确认写入日历**。可以只选部分事项，也可保存草稿稍后处理。已有待办不会自动改动。
+### 留下今天的一点想法
 
-聊天按 **Enter 发送、Ctrl+Enter 换行**；输入框随内容伸缩，请求显示已等待时间。备份统一在设置中。
+![当天日记：自由书写、自动保存和明确归档](docs/media/app-journal.png)
 
-## 数据与 AI
+### 把接下来要做的事放在一起
 
-- 新安装的数据保存在 `%LOCALAPPDATA%\Shiguang\data`；设置中的“打开数据文件夹”可查看实际位置。
-- Token 通过 Windows DPAPI 加密保存，普通备份不包含凭据。换电脑后需要重新填写 Token。
-- 发送助手消息时，会向所选服务商提供问题、相关档案内容与近期对话；费用由该服务商按你的账户收取。
-- 此仓库及 Release 仅含程序源码、通用说明和程序包，不包含作者的个人日记、附件、凭据或自动任务。
-- 用“导出备份”保存完整档案。云文件导出不等于双向数据库同步，也不证明网盘上传已经完成。
+![待办总览：按日期分组，查看今天与未来7天](docs/media/app-tasks.png)
 
-## 预览版范围
+以上为虚构示例数据，不包含个人档案。
 
-当前安装程序未签名。v1.7 已实测四个 Codex 模型组合的真实问答、AI 日程草案、22项回归测试、三语界面与断网基础功能。其他服务商尚无真实账户调用验证，全新电脑安装/卸载仍待测试。见 [测试与修复记录](docs/QA-v1.7.0.md)。
+</details>
 
-离线搜索目前采用文本、同义词和相似片段匹配；扫描件没有 OCR。API 模式没有内置网页搜索，应用没有后台实时联网监控、自动更新或跨设备实时同步。Codex 连接供拾光助手使用，尚未自动同步 Codex 其他任务、GitHub 项目或 ChatGPT 网页对话。AI 生成内容需要使用者核对，尤其是简历中的事实、日期和数字。
+## 想用 AI 时，再让它来帮忙
 
-## 使用说明
+连接自己的 AI 服务后，可以在“拾光助手”里这样说：
 
-- [简体中文](开始使用.txt)
-- [繁體中文](開始使用.txt)
-- [English](Getting-Started.txt)
-- [AI 连接指南](AI连接指南.md)
-- [从源码运行与构建](docs/BUILD.md)
-- [版本记录](CHANGELOG.md)
+> “帮我回顾这周做了什么，区分已完成和还没完成的事。”
+>
+> “明天下午想读书、收拾房间，帮我起草一下安排。”
+>
+> “参考我上传的旧简历和之后的成果，帮我整理一个新版本。”
 
-## English
+**日程先给你看，确认后才写入。** 你可以改时间、删减草案、只选其中几项。聊天按 Enter 发送，Ctrl+Enter 换行。
 
-Shiguang is an offline-first Windows calendar and journal with date-linked files, local fuzzy search and an optional personal AI assistant. Connect your local Codex sign-in or bring your own API credentials. Version 1.7 adds editable AI calendar drafts, Enter-to-send chat and a fix for Codex CLI discovery when launched from Codex Desktop. The UI supports Simplified Chinese, Traditional Chinese and English. Download the Windows installer from [Releases](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0), or read [Getting Started](Getting-Started.txt).
+已经使用 Codex，可以沿用本机登录；也可连接 DeepSeek、OpenAI、Claude、Gemini 等服务，填写自己的 API Key（服务商提供的连接密钥）。AI 需要网络，额度与费用由所选服务商决定。
 
-## 反馈与许可
+[连接 AI 的详细步骤](AI连接指南.md) · [想先试免费额度](docs/FREE-AI.md)
 
-可通过 [Issues](https://github.com/jgr2021/shiguang/issues) 提交功能建议和问题。请只提供必要的界面信息与复现步骤，隐藏日记、Token、联系方式和私人文件。
+## 下载前，你可能想知道
 
-项目目前公开源码，尚未指定开源许可证。第三方组件遵循各自许可证，分发包内附带第三方许可文件。
+**不联网能用吗？** 能。日历、待办、日记、附件和本机搜索都能离线使用；AI 问答需要联网。
+
+**要注册账号吗？** 记录功能不需要拾光账号，下载安装包也不需要 GitHub 账号。
+
+**日记会自动发给 AI 吗？** 不会因为写日记就自动发送。你使用助手提问时，问题、近期对话和相关档案内容会发送给你选择的服务商。
+
+**会到点提醒、自动同步手机吗？** 当前没有到点弹窗提醒、手机版或跨设备自动同步。可以定期导出备份。
+
+**现在是什么版本？** v1.7 预览版，安装包尚未签名。已完成本机实际问答、22项回归、三语界面与断网基础功能检查；更广泛的电脑环境仍在完善。
+
+[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0) · [具体测试范围](docs/QA-v1.7.0.md)
+
+## 一起把它做得更顺手
+
+哪一个按钮让你犹豫了？哪一件日常小事，希望拾光帮你少费一点心？
+
+[告诉我们遇到的问题](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml) · [分享你的使用场景](https://github.com/jgr2021/shiguang/issues/new?template=idea.yml)
+
+反馈需要 GitHub 账号。请隐去日记原文、私人文件和密钥。
+
+---
+
+<details>
+<summary>开发、进阶能力与当前边界</summary>
+
+- [从源码运行与构建](docs/BUILD.md) · [版本记录](CHANGELOG.md)
+- [DeepSeek 接法与 WorkBuddy 协作可行性](docs/DEEPSEEK-WORKBUDDY.md)
+- [完整使用说明](开始使用.txt) · [AI 连接指南](AI连接指南.md)
+- 云文件通过已有网盘客户端的本机同步文件夹导出；不是整库实时同步。
+- API 模式没有内置网页搜索；扫描件没有 OCR。Codex 其他任务、GitHub 项目、ChatGPT 与 WorkBuddy 尚未自动同步。
+- 公开源码与分发包不包含个人日记、凭据或原作者的自动任务。项目尚未指定开源许可证；第三方组件遵循各自许可证。
+
+</details>

@@ -1,0 +1,24 @@
+name: 遇到了问题 / Report a problem
+description: 告诉我们哪一步不顺手，帮助把拾光做得更好用。
+title: "[问题] "
+body:
+  - type: markdown
+    attributes:
+      value: "中文或英文都可以。请不要上传日记原文、密钥或私人文件。"
+  - type: textarea
+    id: experience
+    attributes:
+      label: 你想做什么，实际发生了什么？ / What happened?
+      placeholder: 例如：我想给明天加一件待办，点击保存后没有出现在列表里。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 大概点了哪些地方？ / Steps
+      placeholder: 简单写下操作顺序即可。可以补充已遮住私人信息的截图。
+  - type: input
+    id: version
+    attributes:
+      label: 软件版本和电脑系统 / Version and Windows version
+      placeholder: 例如：拾光 1.7，Windows 11；不清楚也可以留空。

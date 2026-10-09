@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 下载拾光 / Download
+    url: https://jgr2021.github.io/shiguang/
+    about: 看真实界面，下载 Windows 版本。
+  - name: 第一次使用 / Getting started
+    url: https://github.com/jgr2021/shiguang/blob/main/docs/QUICKSTART.md
+    about: 从添加第一条待办开始。

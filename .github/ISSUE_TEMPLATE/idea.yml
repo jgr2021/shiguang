@@ -1,0 +1,18 @@
+name: 分享使用场景 / Share an idea
+description: 哪件日常小事，希望拾光帮你更轻松地完成？
+title: "[想法] "
+body:
+  - type: textarea
+    id: moment
+    attributes:
+      label: 你在什么情况下会需要它？ / Your everyday situation
+      placeholder: 例如：每周日想把下一周的家务和学习时间排好。
+    validations:
+      required: true
+  - type: textarea
+    id: wish
+    attributes:
+      label: 你希望怎样操作？ / What would help?
+      placeholder: 描述你觉得自然的用法即可，不必提供技术方案。
+    validations:
+      required: true
