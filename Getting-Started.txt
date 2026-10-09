@@ -1,0 +1,85 @@
+Shiguang 1.5.0 · Preview
+A little progress, every day.
+
+GET STARTED
+Windows 10/11, 64-bit. Open Shiguang from the desktop or Start menu.
+Python is bundled. API mode does not require Codex.
+You can start offline, or open Settings → AI provider & token.
+This is an unsigned preview. Functional, clean-machine installation and live API tests have not been run for this release.
+
+LANGUAGE
+Choose 简体中文, 繁體中文 or English during installation.
+The app uses that language on first launch. You can change it on the welcome page or at the top of Settings, then click Apply language.
+Language changes apply immediately and persist. The current journal is saved before switching; finish file processing and close other editing windows first.
+The assistant uses your selected language by default, including new documents. You can request another language explicitly.
+Your journals, task titles, file content and past conversations stay in their original language.
+System file-picker buttons follow your Windows language.
+
+CALENDAR AND FILES
+Select a day to add tasks or write a journal. Notes save automatically on this computer. Archive journal keeps an original snapshot.
+Click Today or press Ctrl+T to jump back. Today has a green marker.
+Add a file in Files and link it to a date range or multiple separate dates.
+Search works offline across titles, extracted text, notes, drafts and tasks, with common synonyms.
+Scanned documents do not have OCR. File details show text extraction status.
+Journals, tasks, files, search and backups work offline.
+
+YOUR AI TOKEN
+1. Create an API key or token in your provider’s console.
+2. Open Settings → AI provider & token and choose a provider.
+3. Enter the API base URL, an available model name and your token, then save.
+4. Optionally use Check connection. It sends a short message without records and may incur a small charge.
+5. Open Assistant and ask a question, or choose Update my resume and send.
+
+Presets include OpenAI, DeepSeek, Qwen / Model Studio and Claude / Anthropic.
+Custom OpenAI Chat Completions and Claude Messages compatible endpoints are supported.
+For a local model, supply a local OpenAI-compatible endpoint, such as http://127.0.0.1:11434/v1.
+Use the model and regional URL enabled for your account. Compatibility varies by gateway and model.
+If tools are unsupported, turn off step-by-step retrieval. Responses-only APIs cannot be used as Chat Completions endpoints.
+Web subscription credentials are not API tokens. Local Codex sign-in is optional and requires your own Codex installation and login.
+
+REQUESTS AND COST
+Your chosen provider manages billing and allowances. Shiguang includes no shared token.
+Sending shares your question, recent conversation and relevant archive content with that provider.
+Step-by-step retrieval allows up to 13 model requests per turn. Output tokens and context characters are configurable.
+Stopping prevents further processing; requests already received by the provider may still be billed.
+Reported token usage can include multiple requests and is not a cost guarantee.
+API mode has no built-in web search and cannot verify up-to-date external information.
+
+RESUMES
+Upload an existing resume first. Add its Content through date when known.
+The assistant can read the resume and later achievements to produce a new Word and Markdown version, with source IDs. Originals are not overwritten.
+Check facts, dates and numbers before sharing generated documents. Missing records or unclear dates should be raised in the reply.
+
+DATA AND PRIVACY
+New installs store data in %LOCALAPPDATA%\Shiguang\data, separately for each Windows account.
+Settings → Open data folder shows the actual location.
+Existing personal folders containing vault/diary.sqlite3 continue using that location.
+Tokens are encrypted using Windows DPAPI in credentials.dpapi, scoped to each API address.
+Normal ZIP backups exclude credentials. Enter tokens again after moving to another Windows account or computer.
+The app has no public account system, usage analytics, automatic journal upload or shared key.
+Tokens are sent only in authentication headers to the configured endpoint, not in conversation content.
+API redirects are blocked. Cloud APIs require HTTPS; local loopback APIs may use HTTP.
+
+CLOUD FILES
+Export attachments to a local sync folder managed by Google Drive, OneDrive or Dropbox.
+Exporting does not confirm a completed cloud upload; check your cloud client for status.
+This is not a quota-checking service or two-way database sync.
+
+BACKUP, UPGRADE AND UNINSTALL
+Use Backup regularly. Full backups include journals, tasks, drafts, attachments, conversations and generated documents.
+Run a newer installer to upgrade. Program files are separate from personal data.
+Windows uninstall removes the program and retains journals and encrypted tokens.
+Before restoring a backup, close the app and preserve a copy of the current data folder. Restore vault/, generated/ and other files using the ZIP’s original structure.
+Share the installer or clean program ZIP with friends, rather than your data folder.
+
+PREVIEW SCOPE
+Automatic updates, account services, tray reminders and built-in web search are not included.
+The original owner’s Codex chat and scheduled task are not part of the distributed app.
+Archiving does not launch another person’s Codex task. Ask the assistant directly to review your records.
+
+Official interface references:
+OpenAI: https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create
+DeepSeek: https://api-docs.deepseek.com/
+Claude: https://platform.claude.com/docs/en/api/messages/create
+Qwen: https://help.aliyun.com/zh/model-studio/base-url
+Windows DPAPI: https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata
