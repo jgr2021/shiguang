@@ -5,6 +5,7 @@ from tkinter import ttk
 from calendar_plans import get_plan, pending_plans, apply_plan, dismiss_plan, update_plan
 from diary import require
 from localization import tr
+from schedule_widgets import DateField, TimeField
 from ui_design import P, FONT, SoftButton, ScrollPane, new_window, heading, empty_state
 
 
@@ -40,11 +41,11 @@ class PlanReview:
             ttk.Entry(box, textvariable=values['title'], font=(FONT, 12)).pack(fill='x', pady=(8, 10))
             details = tk.Frame(box, bg=P['paper'])
             details.pack(fill='x')
-            for key, title, width in (('day', tr('日期'), 14), ('at_time', tr('时间（可留空）'), 10)):
-                tk.Label(details, text=title, bg=P['paper'], fg=P['muted'], font=(FONT, 9)).pack(side='left', padx=(0, 8))
-                entry = ttk.Entry(details, textvariable=values[key], width=width, font=(FONT, 10))
-                entry.pack(side='left', padx=(0, 18))
-                entry.bind('<FocusOut>', lambda event: self.summary())
+            for key, title, widget in (('day', tr('日期'), DateField), ('at_time', tr('时间'), TimeField)):
+                area = tk.Frame(details, bg=P['paper'])
+                area.pack(side='left', padx=(0, 20))
+                tk.Label(area, text=title, bg=P['paper'], fg=P['muted'], font=(FONT, 9)).pack(anchor='w', pady=(0, 6))
+                widget(area, values[key], command=self.summary).pack(fill='x')
             tk.Label(box, text=tr('备注'), bg=P['paper'], fg=P['muted'], font=(FONT, 9), anchor='w').pack(fill='x', pady=(10, 4))
             notes = tk.Text(box, height=2, font=(FONT, 10), wrap='word', relief='flat', bg=P['bg'], padx=8, pady=6)
             notes.insert('1.0', task['notes'])

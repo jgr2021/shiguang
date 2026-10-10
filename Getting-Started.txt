@@ -1,5 +1,7 @@
-Shiguang 1.7.0 · Preview
+Shiguang 1.8.0 · Preview
 A little progress, every day.
+
+Pick dates from a calendar and times from hour/minute buttons. All-day events and one-minute adjustments are supported.
 
 GET STARTED
 Windows 10/11, 64-bit. Open Shiguang from the desktop or Start menu.
@@ -16,9 +18,9 @@ Your journals, task titles, file content and past conversations stay in their or
 System file-picker buttons follow your Windows language.
 
 CALENDAR AND FILES
-Select a day to add tasks or write a journal. Notes save automatically on this computer. Archive journal keeps an original snapshot.
+Select a day to add tasks or write a journal. Your journal saves automatically on this computer. No separate archiving step is needed.
 Click Today or press Ctrl+T to jump back. Today has a green marker.
-Add a file in Files and link it to a date range or multiple separate dates.
+Add a file in Files. Click tags and select days on the calendar, or use Date range to pick a start and end.
 Search works offline across titles, extracted text, notes, drafts and tasks, with common synonyms.
 Scanned documents do not have OCR. File details show text extraction status.
 Journals, tasks, files, search and backups work offline.
@@ -46,7 +48,7 @@ Reported token usage can include multiple requests and is not a cost guarantee.
 API mode has no built-in web search and cannot verify up-to-date external information.
 
 RESUMES
-Upload an existing resume first. Add its Content through date when known.
+Upload an existing resume first. Mention its coverage date in the notes or your question when known.
 The assistant can read the resume and later achievements to produce a new Word and Markdown version, with source IDs. Originals are not overwritten.
 Check facts, dates and numbers before sharing generated documents. Missing records or unclear dates should be raised in the reply.
 

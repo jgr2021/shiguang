@@ -12,8 +12,9 @@ import traceback
 from diary import TZ
 from file_store import FileStore
 from ui_extras import Features
+from schedule_widgets import DateField, TimeField
 from app_config import bootstrap, default_data_dir, program_dir
-from ui_design import P, FONT, SoftButton, ScrollPane, prepare_window, new_window, heading, empty_state, install_styles, decorate
+from ui_design import P, FONT, SoftButton, SlimScrollbar, ScrollPane, prepare_window, new_window, heading, empty_state, install_styles, decorate
 
 WEEK = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
@@ -56,12 +57,12 @@ class TaskDialog(tk.Toplevel):
         dates.pack(fill="x")
         self.day_var = tk.StringVar(value=task["day"] if task else (day or app.selected).isoformat())
         self.time_var = tk.StringVar(value=task["at_time"] if task else "")
-        for text, variable, column in ((tr('日期 · YYYY-MM-DD'), self.day_var, 0), (tr('时间 · 可留空'), self.time_var, 1)):
+        for text, variable, widget, column in ((tr('日期'), self.day_var, DateField, 0), (tr('时间'), self.time_var, TimeField, 1)):
             area = tk.Frame(dates, bg=P["paper"])
             area.grid(row=0, column=column, sticky="ew", padx=(0, 12) if column == 0 else (0, 0))
             dates.columnconfigure(column, weight=1)
             label(area, text, 9, P["muted"]).pack(anchor="w")
-            ttk.Entry(area, textvariable=variable, width=20, font=(FONT, 10)).pack(fill="x", pady=(6, 12), ipady=4)
+            widget(area, variable).pack(fill="x", pady=(6, 12))
         self.priority_var = tk.IntVar(value=task["priority"] if task else 0)
         tk.Checkbutton(frame, text=tr('标为重要'), variable=self.priority_var, bg=P["paper"], fg=P["ink"], activebackground=P["paper"], font=(FONT, 10), anchor="w").pack(fill="x", pady=(0, 10))
         label(frame, tr('备注'), 10).pack(anchor="w")
@@ -233,17 +234,13 @@ class PlannerApp(tk.Tk):
         text_area = tk.Frame(self.note_panel, bg=P["soft"])
         text_area.pack(fill="both", expand=True)
         self.note_text = tk.Text(text_area, wrap="word", font=(FONT, 11), bg=P["soft"], fg=P["ink"], insertbackground=P["green"], borderwidth=0, highlightthickness=0, padx=14, pady=14, undo=True, height=8)
-        text_bar = ttk.Scrollbar(text_area, command=self.note_text.yview)
+        text_bar = SlimScrollbar(text_area, command=self.note_text.yview)
         self.note_text.configure(yscrollcommand=text_bar.set)
         self.note_text.pack(side="left", fill="both", expand=True)
         text_bar.pack(side="right", fill="y")
         self.note_text.bind("<<Modified>>", self.note_changed)
         self.note_status = label(self.note_panel, "", 9, P["muted"])
         self.note_status.pack(anchor="w", pady=(9, 10))
-        button(self.note_panel, tr('保存到日记档案'), self.archive_note, primary=True).pack(fill="x")
-        self.history_button = button(self.note_panel, tr('查看当天归档'), self.show_history)
-        self.history_button.pack(fill="x", pady=(8, 0))
-        label(self.note_panel, tr('原文保存在本机；可在拾光助手中查看、总结。'), 8, P["muted"], wraplength=340, justify="left").pack(anchor="w", pady=(10, 0))
         self.features.build_files(self.detail)
         footer = tk.Frame(self, bg=P["bg"], padx=30, pady=10)
         footer.pack(fill="x")
@@ -369,8 +366,6 @@ class PlannerApp(tk.Tk):
         if overdue:
             self.overdue_button.configure(text=tr('另有 {0} 项过期待办  ›', overdue))
             self.overdue_button.pack(fill="x", pady=(12, 0))
-        archived = self.store.db.execute("SELECT count(*) FROM entries WHERE entry_date=?", (self.selected.isoformat(),)).fetchone()[0]
-        self.history_button.configure(text=tr('查看当天归档  ·  {0} 条', archived))
         if hasattr(self, "all_window") and self.all_window.winfo_exists():
             self.render_all_tasks()
 
@@ -521,10 +516,10 @@ class PlannerApp(tk.Tk):
 
     def show_history(self):
         rows = self.store.archived_for_day(self.selected.isoformat())
-        window = new_window(self, tr('当天归档'), (780, 680), escape=True)
-        heading(window, tr('当天归档'), self.selected.isoformat(), tr('日记档案'))
+        window = new_window(self, tr('历史记录'), (780, 680), escape=True)
+        heading(window, tr('历史记录'), self.selected.isoformat(), tr('日记档案'))
         if not rows:
-            empty_state(window, tr('这一天，还没有归档'), tr('随记会自动保存。写好后，点击「保存到日记档案」留下一份原文。'))
+            empty_state(window, tr('这一天，还没有归档'), tr('输入后自动保存'))
             return
         pane = ScrollPane(window, bg=P["bg"], bind_wheel=True)
         pane.pack(fill="both", expand=True, padx=28, pady=(0, 24))
@@ -534,7 +529,7 @@ class PlannerApp(tk.Tk):
             card.pack(fill="x", pady=(0, 14))
             label(card, row["created_at"] + (tr('  · 等待 Agent 整理') if pending else tr('  · 已归档')), 9, P["muted"]).pack(anchor="w", pady=(0, 14))
             content = tk.Text(card, font=(FONT, 11), wrap="word", relief="flat", height=12, bg=P["paper"], fg=P["ink"], spacing1=3, spacing3=6)
-            bar = ttk.Scrollbar(card, command=content.yview)
+            bar = SlimScrollbar(card, command=content.yview)
             content.configure(yscrollcommand=bar.set)
             bar.pack(side="right", fill="y")
             content.pack(fill="both", expand=True)

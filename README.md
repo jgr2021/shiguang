@@ -6,9 +6,9 @@
 
 记下要做的事、突然的想法和每天的小小进展。没有网络，也能继续记录。
 
-[**⬇ 下载 Windows 安装版 · v1.7**](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-Setup-1.7.0-x64.exe)
+[**⬇ 下载 Windows 安装版 · v1.8**](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-Setup-1.8.0-x64.exe)
 
-[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-1.7.0-Windows-x64.zip)
+[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-1.8.0-Windows-x64.zip)
 
 Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
@@ -18,7 +18,7 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
 ![拾光真实界面：月历、今天的待办、完成进度](docs/media/app-calendar.png)
 
-<sub>v1.7 实际运行界面，内容均为虚构示例。你的记录由你自己填写。</sub>
+<sub>v1.8 实际运行界面，内容均为虚构示例。你的记录由你自己填写。</sub>
 
 ## 让拾光陪你过一个普通的日子
 
@@ -42,6 +42,7 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 ## 日历之外，给生活多留一点余地
 
 - **事情记在一起。** 查看今天、未来7天、过期或已完成的待办。
+- **日期和时间，点选就好。** 月历选日期，按钮选小时、分钟，支持全天与一分钟微调。
 - **资料跟着日期走。** 同一份附件关联多天，旅行清单、课程资料、项目文档都能找回来。
 - **想不起完整标题，也能找找看。** 搜索标题、备注、可提取正文及常见近义词；目前不是语义向量搜索。
 - **写完以后，仍然属于你。** 日记与待办存于本机；设置里可以导出完整备份。
@@ -52,13 +53,15 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
 ### 留下今天的一点想法
 
-![当天日记：自由书写、自动保存和明确归档](docs/media/app-journal.png)
+![当天日记：自由书写和自动保存](docs/media/app-journal.png)
 
 ### 把接下来要做的事放在一起
 
 ![待办总览：按日期分组，查看今天与未来7天](docs/media/app-tasks.png)
 
 以上为虚构示例数据，不包含个人档案。
+
+[查看 v1.8 的时间选择与附件新界面](docs/RELEASE-v1.8.0.md)
 
 </details>
 
@@ -88,9 +91,9 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
 **会到点提醒、自动同步手机吗？** 当前没有到点弹窗提醒、手机版或跨设备自动同步。可以定期导出备份。
 
-**现在是什么版本？** v1.7 预览版，安装包尚未签名。已完成本机实际问答、22项回归、三语界面与断网基础功能检查；更广泛的电脑环境仍在完善。
+**现在是什么版本？** v1.8 预览版，安装包尚未签名。已完成本机实际问答、22项回归、三语界面与断网基础功能检查；更广泛的电脑环境仍在完善。
 
-[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0) · [具体测试范围](docs/QA-v1.7.0.md)
+[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.8.0) · [具体测试范围](docs/QA-v1.8.0.md)
 
 ## 一起把它做得更顺手
 

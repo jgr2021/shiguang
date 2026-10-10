@@ -4,7 +4,7 @@
 
 一個放在電腦裡的日曆、日記本和資料夾。記下待辦、突然的想法和每天的小小進展。沒有網路，也能繼續記錄。
 
-**[下載 Windows 安裝版 · v1.7](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-Setup-1.7.0-x64.exe)** · [免安裝 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-1.7.0-Windows-x64.zip)
+**[下載 Windows 安裝版 · v1.8](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-Setup-1.8.0-x64.exe)** · [免安裝 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-1.8.0-Windows-x64.zip)
 
 Windows 10 / 11 · 64位 · 預覽版 · [简体中文](../README.md) · [English](README.en.md)
 
@@ -32,4 +32,4 @@ AI 需要網路與自己的服務商額度；使用助手時，問題、近期�
 
 目前為未簽署的預覽版，尚無到點提醒、手機版、自動跨裝置同步、掃描文字辨識或內建網頁搜尋。
 
-[完整使用說明](../開始使用.txt) · [版本更新](https://github.com/jgr2021/shiguang/releases/tag/v1.7.0) · [回報問題](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml)
+[完整使用說明](../開始使用.txt) · [版本更新](https://github.com/jgr2021/shiguang/releases/tag/v1.8.0) · [回報問題](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml)

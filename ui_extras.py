@@ -11,9 +11,10 @@ from tkinter import filedialog, messagebox, ttk
 import webbrowser
 
 from assistant_bridge import AssistantRun, find_codex
-from file_store import FileStore, parse_dates
+from file_store import FileStore
 from app_config import ai_description, load_ai
-from ui_design import P, FONT, SoftButton, new_window, heading, ScrollPane, empty_state
+from ui_design import P, FONT, SoftButton, SlimScrollbar, new_window, heading, ScrollPane, empty_state
+from attachment_widgets import TagPicker, LinkedDatePicker, split_tags
 
 BG, INK, GREEN, MUTED = P["paper"], P["ink"], P["green"], P["muted"]
 
@@ -161,46 +162,76 @@ class Features:
             self.file_dialog(None, source)
 
     def file_dialog(self, item=None, source=None):
-        top = window(self.app, tr('附件与日期关联'), "780x780")
-        heading(top, tr('附件与日期关联'), tr('一份文件，在需要它的每一天查看'), tr('文件资料'))
+        top = window(self.app, tr('附件与日期关联'), "980x780")
+        hero = heading(top, tr('让文件跟着日子走'), tr('选几个标签，再点选需要这份文件的日期。'))
+        hero.configure(pady=16)
         controls = tk.Frame(top, bg=P["bg"], padx=28, pady=18)
         controls.pack(side="bottom", fill="x")
-        pane = ScrollPane(top, bg=BG, bind_wheel=True)
+        pane = ScrollPane(top, bg=P["bg"], bind_wheel=True)
         pane.pack(fill="both", expand=True, padx=28)
-        frame = tk.Frame(pane.inner, bg=BG, padx=22, pady=20)
-        frame.pack(fill="x")
+        content = pane.inner
+        frame = tk.Frame(content, bg=BG, padx=22, pady=20)
+        dates_card = tk.Frame(content, bg=BG, padx=22, pady=20)
+        layout = [None]
+        def arrange(event=None):
+            wide = content.winfo_width() >= 760
+            if wide == layout[0]:
+                return
+            layout[0] = wide
+            frame.grid_forget()
+            dates_card.grid_forget()
+            content.columnconfigure(0, weight=3, uniform="" if wide else "stack")
+            content.columnconfigure(1, weight=4 if wide else 0)
+            frame.grid(row=0, column=0, sticky="new", padx=(0, 14) if wide else 0, pady=(0, 14))
+            dates_card.grid(row=0 if wide else 1, column=1 if wide else 0, sticky="new", pady=(0, 14))
+        content.bind("<Configure>", arrange, add="+")
+        arrange()
         data = item or {"title": Path(source).name, "tags": "", "cloud_url": "", "notes": "", "as_of": "", "dates": [[self.app.selected.isoformat(), self.app.selected.isoformat()]]}
-        variables = {}
-        def field(caption, key, value):
-            row = tk.Frame(frame, bg=BG)
-            row.pack(fill="x", pady=4)
-            caption_widget = text(row, caption, 9, MUTED)
-            caption_widget.configure(width=23, wraplength=185)
-            caption_widget.pack(side="left", padx=(0, 12))
-            variables[key] = tk.StringVar(value=value)
-            ttk.Entry(row, textvariable=variables[key]).pack(side="right", fill="x", expand=True)
-        field(tr('文件标题'), "title", data["title"])
-        field(tr('标签'), "tags", data["tags"])
-        spans = data["dates"]
-        field(tr('关联开始日期'), "start", spans[0][0])
-        field(tr('关联结束日期'), "end", spans[0][1])
-        extras = [a if a == b else a + "~" + b for a, b in spans[1:]]
-        field(tr('额外日期 / 范围'), "extra", ", ".join(extras))
-        text(frame, tr('格式：2026-10-10；额外日期逗号分隔，范围写 开始~结束'), 9, MUTED).pack(fill="x", pady=(1, 8))
-        field(tr('内容截止日期（选填）'), "as_of", data["as_of"])
-        text(frame, tr('如旧简历涵盖到哪一天；上传日期不等于经历截止日期。'), 9, MUTED).pack(fill="x", pady=(0, 8))
-        field(tr('云端链接（选填）'), "cloud_url", data["cloud_url"])
+        text(frame, tr('文件标题'), 10).pack(anchor="w", pady=(0, 8))
+        title = tk.StringVar(value=data["title"])
+        ttk.Entry(frame, textvariable=title, font=(FONT, 11)).pack(fill="x")
+        text(frame, tr('标签'), 10).pack(anchor="w", pady=(20, 8))
+        suggestions = []
+        for row in self.app.store.db.execute("SELECT tags FROM planner_files WHERE tags<>'' ORDER BY updated_at DESC LIMIT 150"):
+            suggestions.extend(split_tags(row[0]))
+        tags = TagPicker(frame, data["tags"], list(dict.fromkeys(suggestions))[:16])
+        tags.pack(fill="x")
+        text(dates_card, tr('在哪些日子查看'), 12).pack(anchor="w", pady=(0, 14))
+        dates = LinkedDatePicker(dates_card, data["dates"], self.app.selected)
+        dates.pack(fill="x")
         text(frame, tr('备注 / 帮助搜索的描述'), 9, MUTED).pack(fill="x", pady=(8, 5))
-        notes = tk.Text(frame, height=4, font=(FONT, 10), wrap="word", bg="#F3F6EF", relief="flat", padx=10, pady=8)
-        notes.pack(fill="x")
+        note_box = tk.Frame(frame, bg=P["soft"])
+        note_box.pack(fill="x")
+        notes = tk.Text(note_box, height=4, width=1, font=(FONT, 10), wrap="word", bg=P["soft"], fg=INK, insertbackground=GREEN, relief="flat", highlightthickness=0, padx=10, pady=8)
+        note_bar = SlimScrollbar(note_box, command=notes.yview)
+        notes.configure(yscrollcommand=note_bar.set)
+        note_bar.pack(side="right", fill="y")
+        notes.pack(side="left", fill="x", expand=True)
         notes.insert("1.0", data["notes"])
+        notes.bind("<MouseWheel>", lambda e: (notes.yview_scroll(-int(e.delta / 120), "units"), "break")[-1])
         status = tk.StringVar(value=file_status(item["extraction_status"]) if item else tr('点击保存后复制原文件，并在后台提取可搜索文字。'))
-        tk.Label(frame, textvariable=status, bg=BG, fg=MUTED, font=(FONT, 9), wraplength=640, justify="left", anchor="w").pack(fill="x", pady=8)
+        status_label = tk.Label(frame, textvariable=status, bg=BG, fg=MUTED, font=(FONT, 9), wraplength=280, justify="left", anchor="w")
+        status_label.pack(fill="x", pady=(12, 0))
+        status_label.bind("<Configure>", lambda e: status_label.configure(wraplength=max(140, e.width)))
         if item:
-            preview = tk.Text(frame, height=4, font=(FONT, 9), wrap="word", relief="flat", bg="#F3F6EF")
-            preview.pack(fill="both", expand=True)
+            preview_box = tk.Frame(frame, bg=P["soft"])
+            def toggle_preview():
+                if preview_box.winfo_manager():
+                    preview_box.pack_forget()
+                    preview_toggle.configure(text=tr('查看文件文字  ›'))
+                else:
+                    preview_box.pack(fill="x", pady=(8, 0))
+                    preview_toggle.configure(text=tr('收起文件文字  ‹'))
+            preview_toggle = action(frame, tr('查看文件文字  ›'), toggle_preview)
+            preview_toggle.pack(anchor="w", pady=(12, 0))
+            preview = tk.Text(preview_box, height=5, width=1, font=(FONT, 9), wrap="word", relief="flat", bg=P["soft"], highlightthickness=0, padx=10, pady=8)
+            preview_bar = SlimScrollbar(preview_box, command=preview.yview)
+            preview.configure(yscrollcommand=preview_bar.set)
+            preview_bar.pack(side="right", fill="y")
+            preview.pack(fill="x", expand=True)
             preview.insert("1.0", item["extracted_text"][:6000] or tr('未提取正文，可补充备注帮助搜索。'))
             preview.configure(state="disabled")
+            preview.bind("<MouseWheel>", lambda e: (preview.yview_scroll(-int(e.delta / 120), "units"), "break")[-1])
         def finish(result):
             if top.winfo_exists():
                 top.destroy()
@@ -209,26 +240,30 @@ class Features:
         def failed(message):
             if top.winfo_exists():
                 save.configure(state="normal")
+                cancel.configure(state="normal")
                 status.set(message)
                 top.protocol("WM_DELETE_WINDOW", top.destroy)
         def commit():
             try:
-                values = {key: value.get().strip() for key, value in variables.items()}
-                selected = parse_dates(values.pop("start"), values.pop("end"), values.pop("extra"))
-                values["notes"] = notes.get("1.0", "end-1c")
+                values = {"title": title.get().strip(), "tags": tags.value(), "notes": notes.get("1.0", "end-1c"),
+                          "as_of": data.get("as_of", ""), "cloud_url": data.get("cloud_url", "")}
+                selected = dates.values()
                 self.app.store.validate_metadata(values)
             except Exception as error:
                 status.set(str(error))
                 return
             save.configure(state="disabled")
+            cancel.configure(state="disabled")
             status.set(tr('正在后台保存和提取文字，日历仍可使用……'))
             top.protocol("WM_DELETE_WINDOW", lambda: status.set(tr('正在保存，请稍候。')))
             if item:
                 self.run(lambda store: store.update_file(item["id"], item["version"], values, selected), finish, failed)
             else:
                 self.run(lambda store: store.import_file(source, values, selected), finish, failed)
-        save = action(controls, tr('保存附件与日期'), commit, True)
+        save = action(controls, tr('保存'), commit, True)
         save.pack(side="right")
+        cancel = action(controls, tr('取消'), top.destroy)
+        cancel.pack(side="right", padx=8)
         if item:
             action(controls, tr('打开本机文件'), lambda: self.open_file(item)).pack(side="left")
             if item["cloud_url"]:
@@ -263,7 +298,7 @@ class Features:
         for key, name, width in (("kind", tr('类型'), 70), ("day", tr('日期'), 110), ("title", tr('内容'), 560)):
             tree.heading(key, text=name)
             tree.column(key, width=width)
-        bar = ttk.Scrollbar(results_panel, command=tree.yview)
+        bar = SlimScrollbar(results_panel, command=tree.yview)
         tree.configure(yscrollcommand=bar.set)
         bar.pack(side="right", fill="y")
         tree.pack(fill="both", expand=True)
@@ -323,7 +358,7 @@ class Features:
         top = window(self.app, tr('云文件管理'), "760x580")
         self.cloud_window = top
         top.bind("<Escape>", lambda event: top.destroy())
-        heading(top, tr('本机保存，网盘带走'), tr('支持 Google Drive、OneDrive、Dropbox 等客户端的本机同步文件夹。\n在附件详情里也可以关联已有的云端链接。'), tr('云文件管理'))
+        heading(top, tr('本机保存，网盘带走'), tr('支持 Google Drive、OneDrive、Dropbox 等客户端的本机同步文件夹。'), tr('云文件管理'))
         pane = ScrollPane(top, bg=BG, bind_wheel=True)
         pane.pack(fill="both", expand=True, padx=28, pady=(0, 28))
         frame = tk.Frame(pane.inner, bg=BG, padx=22, pady=22)
@@ -388,7 +423,7 @@ class Features:
         self.chat_output.tag_configure("message", foreground=INK, lmargin1=0, lmargin2=0, spacing3=12)
         self.chat_output.tag_configure('user_name', foreground=GREEN, font=(FONT, 9, 'bold'), justify='right', spacing1=16, spacing3=6)
         self.chat_output.tag_configure('user_message', foreground=INK, background=P['pale'], lmargin1=80, lmargin2=80, rmargin=12, justify='right', spacing1=6, spacing3=16)
-        bar = ttk.Scrollbar(area, command=self.chat_output.yview)
+        bar = SlimScrollbar(area, command=self.chat_output.yview)
         self.chat_output.configure(yscrollcommand=bar.set)
         bar.pack(side="right", fill="y")
         self.chat_output.pack(fill="both", expand=True)

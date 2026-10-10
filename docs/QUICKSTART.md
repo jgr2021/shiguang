@@ -8,8 +8,8 @@
 
 | 你想怎样使用 | 下载哪个 |
 | --- | --- |
-| 像普通软件一样安装，有桌面入口 | **[Windows 安装版（推荐）](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-Setup-1.7.0-x64.exe)** |
-| 解压到文件夹后运行 | [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.7.0/Shiguang-1.7.0-Windows-x64.zip) |
+| 像普通软件一样安装，有桌面入口 | **[Windows 安装版（推荐）](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-Setup-1.8.0-x64.exe)** |
+| 解压到文件夹后运行 | [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-1.8.0-Windows-x64.zip) |
 
 适用于 Windows 10 / 11 的64位电脑。目前没有 macOS、手机安装包。
 
@@ -30,7 +30,7 @@
 
 ![月历与当天待办，使用虚构示例数据](media/app-calendar.png)
 
-待办保存到本机，不需要网络。这里填写时间用于安排；当前版本没有到点弹窗提醒。
+待办保存到本机，不需要网络。日期与时间直接点选，支持全天事项和 1 分钟微调。设置时间用于安排；当前版本没有到点弹窗提醒。
 
 ## 3. 留下一句话
 
@@ -38,7 +38,7 @@
 
 ![当天日记，使用虚构示例数据](media/app-journal.png)
 
-**自动保存草稿**用于接着写；**保存到日记档案**会保留当前文字的一份正式记录。后来继续修改草稿，不会覆盖原先归档的原文。
+日记会自动保存在本机，不需要另外点击归档。以前保存的历史档案仍可从搜索中查看。
 
 ## 以后慢慢用到这些
 

@@ -212,11 +212,99 @@ class SoftButton(tk.Frame):
         self.native.focus_set()
 
 
+class SlimScrollbar(tk.Canvas):
+    """Quiet, rounded vertical scrollbar with dragging and keyboard support."""
+    def __init__(self, parent, command, orient="vertical", **kwargs):
+        super().__init__(parent, width=12, height=1, bg=parent.cget("bg"),
+                         highlightthickness=0, bd=0, takefocus=0, **kwargs)
+        self.command = command
+        self.first, self.last = 0.0, 1.0
+        self.hovered = False
+        self.drag_offset = None
+        self.bind("<Configure>", lambda event: self._draw())
+        self.bind("<Enter>", lambda event: self._hover(True))
+        self.bind("<Leave>", lambda event: self._hover(False))
+        self.bind("<Button-1>", self._press)
+        self.bind("<B1-Motion>", self._drag)
+        self.bind("<ButtonRelease-1>", self._release)
+        self.bind("<FocusIn>", lambda event: self._draw())
+        self.bind("<FocusOut>", lambda event: self._draw())
+        self.bind("<MouseWheel>", self._wheel)
+        for key, count, unit in (("Up", -1, "units"), ("Down", 1, "units"),
+                                 ("Prior", -1, "pages"), ("Next", 1, "pages")):
+            self.bind("<" + key + ">", lambda event, n=count, u=unit: self._scroll(n, u))
+        self.bind("<Home>", lambda event: self._move(0))
+        self.bind("<End>", lambda event: self._move(1))
+
+    def set(self, first, last):
+        self.first = max(0.0, min(1.0, float(first)))
+        self.last = max(self.first, min(1.0, float(last)))
+        self.configure(takefocus=int(self.last - self.first < .999))
+        self._draw()
+
+    def _geometry(self):
+        track = max(1, self.winfo_height() - 12)
+        visible = self.last - self.first
+        thumb = min(track, max(28, track * visible))
+        travel = max(0, track - thumb)
+        top = 6 + travel * self.first / max(.0001, 1 - visible)
+        return top, thumb, travel, visible
+
+    def _draw(self):
+        self.delete("all")
+        if self.last - self.first >= .999:
+            self.configure(cursor="arrow")
+            return
+        self.configure(cursor="hand2")
+        top, thumb, _, _ = self._geometry()
+        active = self.hovered or self.drag_offset is not None or self.focus_get() == self
+        width = 7 if active else 5
+        self.create_line(6, top + width / 2, 6, top + thumb - width / 2,
+                         width=width, fill="#829D8E" if active else "#CCD8CE", capstyle="round")
+
+    def _hover(self, value):
+        self.hovered = value
+        self._draw()
+
+    def _press(self, event):
+        if self.last - self.first >= .999:
+            return "break"
+        self.focus_set()
+        top, thumb, _, _ = self._geometry()
+        self.drag_offset = event.y - top if top <= event.y <= top + thumb else thumb / 2
+        self._drag(event)
+        return "break"
+
+    def _drag(self, event):
+        if self.drag_offset is not None:
+            _, _, travel, visible = self._geometry()
+            fraction = max(0, min(1, (event.y - 6 - self.drag_offset) / max(1, travel)))
+            self.command("moveto", fraction * (1 - visible))
+            self._draw()
+        return "break"
+
+    def _release(self, event):
+        self.drag_offset = None
+        self._draw()
+        return "break"
+
+    def _scroll(self, count, unit):
+        self.command("scroll", count, unit)
+        return "break"
+
+    def _move(self, fraction):
+        self.command("moveto", fraction)
+        return "break"
+
+    def _wheel(self, event):
+        return self._scroll(-int(event.delta / 120) or (-1 if event.delta > 0 else 1), "units")
+
+
 class ScrollPane(tk.Frame):
     def __init__(self, parent, bg=None, bind_wheel=False):
         super().__init__(parent, bg=bg or P["paper"])
         self.canvas = tk.Canvas(self, bg=self.cget("bg"), highlightthickness=0, bd=0, width=1, height=1)
-        self.bar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.bar = SlimScrollbar(self, command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self._scrollbar)
         self.canvas.pack(side="left", fill="both", expand=True)
         self.inner = tk.Frame(self.canvas, bg=self.cget("bg"))
