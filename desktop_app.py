@@ -18,6 +18,7 @@ from calendar_cells import CalendarDayCell, day_preview
 from chat_keys import ime_composing
 from holiday_calendar import holiday_info
 from app_config import bootstrap, default_data_dir, program_dir
+from platform_support import wheel_units, prepare_cli_environment
 from ui_design import P, FONT, SoftButton, SlimScrollbar, ScrollPane, prepare_window, new_window, heading, empty_state, install_styles, decorate
 
 WEEK = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
@@ -165,6 +166,12 @@ class PlannerApp(tk.Tk):
         self.bind("<Control-s>", lambda event: self.save_note())
         self.bind("<Control-t>", lambda event: self.select_day(today()))
         self.bind("<Control-f>", lambda event: self.features.search())
+        if sys.platform == 'darwin':
+            self.bind('<Command-n>', lambda event: self.open_editor())
+            self.bind('<Command-s>', lambda event: self.save_note())
+            self.bind('<Command-t>', lambda event: self.select_day(today()))
+            self.bind('<Command-f>', lambda event: self.features.search())
+            self.createcommand('tk::mac::Quit', self.close)
         self.bind_all("<MouseWheel>", self.mousewheel, add="+")
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.report_callback_exception = self.callback_error
@@ -560,7 +567,7 @@ class PlannerApp(tk.Tk):
             content.pack(fill="both", expand=True)
             content.insert("1.0", row["raw_text"])
             content.configure(state="disabled")
-            content.bind("<MouseWheel>", lambda event, editor=content: (editor.yview_scroll(-int(event.delta / 120), "units"), "break")[-1])
+            content.bind("<MouseWheel>", lambda event, editor=content: (editor.yview_scroll(wheel_units(event), "units"), "break")[-1])
 
     def all_tasks(self):
         if hasattr(self, "all_window") and self.all_window.winfo_exists():
@@ -710,6 +717,7 @@ class PlannerApp(tk.Tk):
 
 
 def main():
+    prepare_cli_environment()
     default_root = default_data_dir()
     parser = argparse.ArgumentParser(description="拾光离线日历")
     parser.add_argument("--data-dir", default=str(default_root))
@@ -717,6 +725,7 @@ def main():
     args = parser.parse_args()
     # A per-folder mutex prevents accidental duplicate editors, without a network port.
     mutex = None
+    lock_file = None
     if sys.platform == "win32":
         import ctypes
         signature = hashlib.sha256(str(Path(args.data_dir).resolve()).casefold().encode("utf-8")).hexdigest()[:24]
@@ -731,6 +740,20 @@ def main():
             messagebox.showinfo(tr('拾光已打开'), tr('拾光日历已经在运行，请从任务栏切回应用。'), parent=root)
             root.destroy()
             api.CloseHandle(mutex)
+            return
+    if sys.platform == 'darwin':
+        import fcntl
+        home = Path(args.data_dir).resolve()
+        home.mkdir(parents=True, exist_ok=True)
+        lock_file = (home / '.shiguang.lock').open('a+')
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            lock_file.close()
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showinfo(tr('拾光已打开'), tr('拾光已经打开，请从 Dock 切回应用。'), parent=root)
+            root.destroy()
             return
     try:
         from github_accounts import Accounts
@@ -747,6 +770,8 @@ def main():
     finally:
         if mutex is not None:
             api.CloseHandle(mutex)
+        if lock_file is not None:
+            lock_file.close()
 
 
 if __name__ == "__main__":

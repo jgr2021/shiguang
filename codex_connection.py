@@ -5,11 +5,13 @@ from pathlib import Path
 import queue
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from functools import lru_cache
 
 from localization import tr
+from platform_support import prepare_cli_environment
 
 
 @lru_cache(maxsize=20)
@@ -26,11 +28,23 @@ def _is_cli(path, modified):
 
 
 def find_codex(explicit=''):
+    prepare_cli_environment()
     def usable(path):
         path = Path(path).expanduser().resolve()
-        return str(path) if path.is_file() and path.suffix.lower() == '.exe' and _is_cli(str(path), path.stat().st_mtime_ns) else None
+        executable = path.suffix.lower() == '.exe' if sys.platform == 'win32' else os.access(path, os.X_OK)
+        return str(path) if path.is_file() and executable and _is_cli(str(path), path.stat().st_mtime_ns) else None
     if explicit:
         return usable(explicit)
+    if sys.platform != 'win32':
+        candidates = [Path(directory) / 'codex' for directory in os.environ.get('PATH', '').split(os.pathsep) if directory]
+        if sys.platform == 'darwin':
+            candidates += [Path('/Applications/Codex.app/Contents/Resources/codex'),
+                           Path.home() / 'Applications/Codex.app/Contents/Resources/codex']
+        for path in candidates:
+            found = usable(path)
+            if found:
+                return found
+        return None
     # Prefer the actual CLI bundled with Desktop; Windows which() searches CWD first.
     base = Path(os.environ.get('LOCALAPPDATA', '')) / 'OpenAI' / 'Codex' / 'bin'
     candidates = list(base.glob('*/codex.exe')) if base.is_dir() else []
@@ -127,10 +141,11 @@ class MetadataClient:
 def inspect_codex(explicit=''):
     binary = find_codex(explicit)
     if not binary:
-        raise ValueError(tr('未找到 Codex。请安装 Codex，或选择 codex.exe 的位置。'))
+        raise ValueError(tr('未找到 Codex CLI。请安装 Codex，或选择命令行程序的位置。'))
     client = MetadataClient(binary)
     try:
-        client.call('initialize', {'clientInfo': {'name': 'shiguang', 'title': 'Shiguang', 'version': '1.9.0'}})
+        from app_config import VERSION
+        client.call('initialize', {'clientInfo': {'name': 'shiguang', 'title': 'Shiguang', 'version': VERSION}})
         client.send({'method': 'initialized', 'params': {}})
         account = client.call('account/read', {'refreshToken': False}).get('account') or {}
         models, cursor = [], None
@@ -158,7 +173,7 @@ def inspect_codex(explicit=''):
 def login_codex(explicit=''):
     binary = find_codex(explicit)
     if not binary:
-        raise ValueError(tr('未找到 Codex。请安装 Codex，或选择 codex.exe 的位置。'))
+        raise ValueError(tr('未找到 Codex CLI。请安装 Codex，或选择命令行程序的位置。'))
     # The user completes the provider's browser login. No auth file is read here.
     try:
         result = subprocess.run([binary, 'login'], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))

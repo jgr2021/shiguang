@@ -3,9 +3,10 @@ import base64
 import json
 import re
 import time
+import sys
 from pathlib import Path
 
-from app_config import protect, program_dir
+from app_config import protect, program_dir, default_data_dir
 from diary import atomic_write, require
 from localization import tr
 
@@ -22,14 +23,20 @@ def write_json(path, value):
 
 
 def app_registration():
-    value = read_json(program_dir() / "github-app.json", {})
+    value = read_json(registration_path(), None)
+    if value is None:
+        value = read_json(program_dir() / 'github-app.json', {})
     return {"client_id": value.get("client_id", ""), "slug": value.get("slug", "")}
+
+
+def registration_path():
+    return (default_data_dir().parent if sys.platform == 'darwin' else program_dir()) / 'github-app.json'
 
 
 def save_registration(client_id, slug):
     require(re.fullmatch(r"[A-Za-z0-9_.-]{6,100}", client_id or "") and
             re.fullmatch(r"[a-z0-9-]{1,100}", slug or ""), tr('请填写正确的 Client ID 和 App 名称。'))
-    write_json(program_dir() / "github-app.json", {"client_id": client_id, "slug": slug})
+    write_json(registration_path(), {"client_id": client_id, "slug": slug})
 
 
 def binding(root):
@@ -44,6 +51,11 @@ def save_binding(root, value):
 
 
 def save_token(root, user):
+    if sys.platform == 'darwin':
+        from mac_secrets import write
+        write(root, 'github-token', json.dumps({'user_id': user['id'], 'token': user['token'],
+                                              'expires_at': user['expires_at']}).encode())
+        return
     # This file is deliberately outside the SQLite database and backup allowlist.
     path = Path(root) / "vault" / "github-token.dpapi"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -53,9 +65,15 @@ def save_token(root, user):
 
 
 def token_for(root, user_id):
-    path = Path(root) / "vault" / "github-token.dpapi"
-    require(path.exists(), tr('请先用 GitHub 登录。'))
-    value = json.loads(protect(base64.b64decode(path.read_bytes()), True))
+    if sys.platform == 'darwin':
+        from mac_secrets import read
+        raw = read(root, 'github-token')
+        require(raw is not None, tr('请先用 GitHub 登录。'))
+        value = json.loads(raw)
+    else:
+        path = Path(root) / "vault" / "github-token.dpapi"
+        require(path.exists(), tr('请先用 GitHub 登录。'))
+        value = json.loads(protect(base64.b64decode(path.read_bytes()), True))
     require(value.get("user_id") == user_id, tr('登录账号与此资料空间不一致，已停止同步。'))
     require(not value.get("expires_at") or value["expires_at"] > time.time() + 30,
             tr('GitHub 登录已过期，请重新登录。'))
@@ -63,6 +81,10 @@ def token_for(root, user_id):
 
 
 def forget_token(root):
+    if sys.platform == 'darwin':
+        from mac_secrets import delete
+        delete(root, 'github-token')
+        return
     path = Path(root) / "vault" / "github-token.dpapi"
     if path.exists():
         path.unlink()

@@ -48,3 +48,5 @@ _internal/
 Thumbs.db
 
 work/
+dmg-stage/
+*.dmg

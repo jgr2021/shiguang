@@ -13,10 +13,12 @@ from urllib.parse import urlsplit, urlunsplit
 from diary import atomic_write, require
 from ai_catalog import PRESETS
 
-VERSION = "1.9.0"
+VERSION = "1.9.1"
 
 
 def program_dir():
+    if getattr(sys, 'frozen', False) and sys.platform == 'darwin':
+        return Path(sys.executable).resolve().parent.parent / 'Resources'
     return Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 
 
@@ -25,6 +27,11 @@ def default_data_dir():
     base = program_dir()
     if (base / "vault" / "diary.sqlite3").exists():
         return base
+    if sys.platform == 'darwin':
+        legacy = Path.home() / 'AppData/Local/Shiguang/data'
+        if (legacy / 'vault/diary.sqlite3').exists():
+            return legacy
+        return Path.home() / 'Library/Application Support/Shiguang/data'
     return Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))) / "Shiguang" / "data"
 
 
@@ -121,9 +128,14 @@ def protect(data, decrypt=False):
 
 class Credentials:
     def __init__(self, root):
+        self.root = Path(root)
         self.path = Path(root) / "credentials.dpapi"
 
     def _read(self):
+        if sys.platform == 'darwin':
+            from mac_secrets import read
+            raw = read(self.root, 'ai-credentials')
+            return json.loads(raw.decode('utf-8')) if raw is not None else {}
         if not self.path.exists():
             return {}
         return json.loads(protect(base64.b64decode(self.path.read_bytes()), True).decode("utf-8"))
@@ -138,6 +150,13 @@ class Credentials:
             values[credential_id(config)] = token
         else:
             values.pop(credential_id(config), None)
+        if sys.platform == 'darwin':
+            from mac_secrets import write, delete
+            if values:
+                write(self.root, 'ai-credentials', json.dumps(values).encode('utf-8'))
+            else:
+                delete(self.root, 'ai-credentials')
+            return
         encrypted = protect(json.dumps(values).encode("utf-8"))
         atomic_write(self.path, base64.b64encode(encrypted).decode("ascii"))
 

@@ -2,6 +2,7 @@
 from datetime import datetime
 import json
 import os
+import sys
 import tkinter as tk
 from tkinter import ttk, filedialog
 from urllib.parse import urlsplit
@@ -91,7 +92,7 @@ class AISettings:
         SoftButton(key_controls, tr('获取官方 API Key'), self.open_key_page).pack(side='left')
         SoftButton(key_controls, tr('接入说明'), self.open_docs).pack(side='left', padx=8)
         SoftButton(key_controls, tr('移除已保存密钥'), self.forget).pack(side='right')
-        note(self.api_card, tr('Token 使用 Windows 加密保存。地址改变后，密钥不会自动转发到新地址。'))
+        note(self.api_card, tr('Token 通过系统安全存储保存。地址改变后，密钥不会自动转发到新地址。'))
 
         self.codex_card = card(body, tr('02  连接本机 Codex'))
         self.codex_status = tk.StringVar(value=tr('点击读取状态，查看本机登录、模型目录与可读取的额度。'))
@@ -105,7 +106,7 @@ class AISettings:
         SoftButton(line, tr('程序位置'), self.toggle_binary).pack(side='right')
         self.binary_frame = tk.Frame(self.codex_card, bg=P['paper'])
         self.field(self.binary_frame, tr('Codex 程序位置（留空自动查找）'), 'codex_binary')
-        SoftButton(self.binary_frame, tr('选择 codex.exe'), self.pick_binary).pack(anchor='w', pady=5)
+        SoftButton(self.binary_frame, tr('选择 Codex 程序'), self.pick_binary).pack(anchor='w', pady=5)
         note(self.codex_card, tr('登录由 Codex 自己管理。拾光不读取、复制或保存 Codex 的登录 Token。'))
         note(self.codex_card, tr('这里连接的是拾光助手；其他 Codex 对话与项目不会因此自动同步。'))
 
@@ -268,7 +269,7 @@ class AISettings:
                 break
 
     def pick_binary(self):
-        path = filedialog.askopenfilename(parent=self.top, title=tr('选择 codex.exe'), filetypes=[('Codex executable', '*.exe')])
+        path = filedialog.askopenfilename(parent=self.top, title=tr('选择 Codex 程序'), filetypes=[('Codex executable', '*.exe' if sys.platform == 'win32' else '*')])
         if path:
             self.fields['codex_binary'].set(path)
             self.codex_models = {}

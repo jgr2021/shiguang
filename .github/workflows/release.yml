@@ -1,0 +1,82 @@
+name: Build Windows and macOS releases
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            name: Windows-x64
+          - runner: macos-15
+            name: macOS-arm64
+          - runner: macos-15-intel
+            name: macOS-x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+      - name: Install build dependencies
+        run: python -m pip install -r requirements-build.txt
+      - name: Build native app and packages
+        run: python packaging/build_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            release/*.exe
+            release/*.zip
+            release/*.dmg
+            release/SHA256SUMS-*.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Publish complete preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^VERSION = "\([0-9.]*\)"/\1/p' app_config.py)
+          tag="v$version"
+          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "$tag" ]]; then
+            echo "Tag and application version differ" >&2; exit 1
+          fi
+          cd release
+          cat SHA256SUMS-*.txt | sort > SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+          cd ..
+          if gh release view "$tag" --json isDraft >/dev/null 2>&1; then
+            draft=$(gh release view "$tag" --json isDraft --jq .isDraft)
+            [[ "$draft" == true ]] || { echo "Published release is immutable" >&2; exit 1; }
+          else
+            gh release create "$tag" --target "$GITHUB_SHA" --draft --prerelease --title "拾光 Shiguang $tag · Preview" --notes-file "docs/RELEASE-$tag.md"
+          fi
+          gh release upload "$tag" release/*.exe release/*.zip release/*.dmg release/SHA256SUMS.txt --clobber
+          gh release edit "$tag" --draft=false --prerelease

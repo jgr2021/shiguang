@@ -1,5 +1,13 @@
 # 版本记录
 
+## 1.9.1 · Preview（新增 macOS 原生包）
+
+- 增加 Apple Silicon 和 Intel 的 macOS 15+ App、DMG 与 ZIP 构建。
+- Mac 使用系统钥匙串保存 AI/GitHub 密钥，资料位于用户 Application Support；升级应用与日记数据分离。
+- 适配 Finder 文件打开、触控板滚动、Command 快捷键、Mac 字体和 Codex CLI 查找。
+- 增加 Windows/macOS 原生构建发布流程；全部平台构建完成后才发布，保留源码版本、校验值和当前限制说明。
+- Mac 发行包没有 Apple Developer ID 签名或公证；真实桌面、钥匙串、AI 与 GitHub 同步尚待验收。
+
 ## 1.9.0 · Preview（GitHub App 注册及联网验收待完成）
 
 - 本机版保持免登录、离线可用；GitHub 登录和同步只在设置中按需开启。

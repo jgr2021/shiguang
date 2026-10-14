@@ -1,6 +1,7 @@
 """Attachment, search, cloud folder and assistant windows."""
 from localization import tr, file_status
 import os
+from platform_support import open_path, wheel_units
 from pathlib import Path
 import queue
 import threading
@@ -213,7 +214,7 @@ class Features:
         note_bar.pack(side="right", fill="y")
         notes.pack(side="left", fill="x", expand=True)
         notes.insert("1.0", data["notes"])
-        notes.bind("<MouseWheel>", lambda e: (notes.yview_scroll(-int(e.delta / 120), "units"), "break")[-1])
+        notes.bind("<MouseWheel>", lambda e: (notes.yview_scroll(wheel_units(e), "units"), "break")[-1])
         status = tk.StringVar(value=file_status(item["extraction_status"]) if item else tr('点击保存后复制原文件，并在后台提取可搜索文字。'))
         status_label = tk.Label(frame, textvariable=status, bg=BG, fg=MUTED, font=(FONT, 9), wraplength=280, justify="left", anchor="w")
         status_label.pack(fill="x", pady=(12, 0))
@@ -236,7 +237,7 @@ class Features:
             preview.pack(fill="x", expand=True)
             preview.insert("1.0", item["extracted_text"][:6000] or tr('未提取正文，可补充备注帮助搜索。'))
             preview.configure(state="disabled")
-            preview.bind("<MouseWheel>", lambda e: (preview.yview_scroll(-int(e.delta / 120), "units"), "break")[-1])
+            preview.bind("<MouseWheel>", lambda e: (preview.yview_scroll(wheel_units(e), "units"), "break")[-1])
         def finish(result):
             if top.winfo_exists():
                 top.destroy()
@@ -292,9 +293,9 @@ class Features:
             messagebox.showerror(tr('文件不可用'), tr('本机附件文件缺失，请从备份恢复。'), parent=self.app)
             return
         if path.suffix.lower() in {".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md", ".csv", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".mp3", ".mp4"}:
-            os.startfile(str(path))
+            open_path(str(path))
         else:
-            os.startfile(str(path.parent))
+            open_path(str(path.parent))
 
     def search(self, show_all=False):
         from search_browser import SearchBrowser
@@ -403,6 +404,8 @@ class Features:
         self.chat_input.bind('<Return>', self.enter_chat)
         self.chat_input.bind('<Control-Return>', self.newline_chat)
         self.chat_input.bind('<Shift-Return>', self.newline_chat)
+        if sys.platform == 'darwin':
+            self.chat_input.bind('<Command-Return>', self.newline_chat)
         self.chat_input.bind('<<Modified>>', self.resize_composer)
         self.chat_input.bind('<Configure>', self.resize_composer)
 
@@ -467,7 +470,7 @@ class Features:
     def open_generated(self):
         path = self.app.store.root / "generated"
         path.mkdir(exist_ok=True)
-        os.startfile(str(path))
+        open_path(str(path))
 
     def plan_prompt(self):
         self.allow_calendar.set(True)

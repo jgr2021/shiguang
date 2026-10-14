@@ -2,6 +2,8 @@
 from localization import tr, LANGUAGES, get_language
 import json
 import os
+import sys
+from platform_support import open_path, wheel_units
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
@@ -113,12 +115,14 @@ def about(features):
     label(data_box, tr('个人数据目录：\n') + str(app.store.root), 9)
     row = tk.Frame(data_box, bg=BG)
     row.pack(fill="x", pady=10)
-    button(row, tr('打开数据目录'), lambda: os.startfile(str(app.store.root))).pack(side="left")
+    button(row, tr('打开数据目录'), lambda: open_path(str(app.store.root))).pack(side="left")
     button(row, tr('导出完整备份'), app.backup).pack(side="left", padx=10)
     def guide():
         path = program_dir() / {"zh-CN": "开始使用.txt", "zh-TW": "開始使用.txt", "en": "Getting-Started.txt"}[get_language()]
+        if sys.platform == 'darwin':
+            path = program_dir() / 'MACOS-START.md'
         if path.exists():
-            os.startfile(str(path))
+            open_path(str(path))
     button(data_box, tr('使用说明与隐私说明'), guide).pack(anchor="w")
     label(body, tr('拾光日历  ') + VERSION + tr(' · 预览版'), 10, GREEN)
-    label(body, tr('升级请安装新版安装包。卸载只移除程序，保留日记与加密 Token；迁移到其他 Windows 账户后需重新填写 Token。'), 9)
+    label(body, tr('升级请安装新版安装包。卸载只移除程序，保留日记与加密 Token；迁移到其他账户或电脑后需重新填写 Token。'), 9)

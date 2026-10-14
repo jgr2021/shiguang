@@ -6,11 +6,12 @@ import tkinter as tk
 from tkinter import ttk, font as tkfont
 
 from localization import tr
+from platform_support import wheel_units
 
 P = {"bg": "#F4F6F2", "paper": "#FFFFFF", "ink": "#273E34", "muted": "#738178",
      "line": "#E3E9E2", "green": "#2D6953", "pale": "#E7F0E8", "soft": "#F1F5EF",
      "orange": "#AC7339", "red": "#AB5148"}
-FONT = "Microsoft YaHei UI"
+FONT = "PingFang SC" if sys.platform == 'darwin' else "Microsoft YaHei UI"
 
 
 def _hwnd(window):
@@ -298,7 +299,7 @@ class SlimScrollbar(tk.Canvas):
         return "break"
 
     def _wheel(self, event):
-        return self._scroll(-int(event.delta / 120) or (-1 if event.delta > 0 else 1), "units")
+        return self._scroll(wheel_units(event), "units")
 
 
 class ScrollPane(tk.Frame):
@@ -330,7 +331,7 @@ class ScrollPane(tk.Frame):
         widget = self.winfo_containing(event.x_root, event.y_root)
         if widget and str(widget).startswith(str(self)):
             if self.inner.winfo_reqheight() > self.canvas.winfo_height():
-                self.canvas.yview_scroll(-int(event.delta / 120), "units")
+                self.canvas.yview_scroll(wheel_units(event), "units")
             return "break"
 
 

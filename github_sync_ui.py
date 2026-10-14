@@ -1,6 +1,7 @@
 """Account setup, sync status and explicit conflict resolution."""
 import json
 import os
+from platform_support import open_path, wheel_units
 import threading
 import time
 import tkinter as tk
@@ -173,7 +174,7 @@ class SyncWindow:
         card = self.card('同步范围')
         self.text(card, tr('同步日记、待办、正式档案与小附件的日期关联。每个附件不超过10 MiB，总计100 MiB。助手聊天、AI Token 和本机配置不参与同步。'))
         self.text(card, tr('私有仓库不是端到端加密空间；删除记录后，Git 历史中仍可能保留旧内容。'))
-        self.button(card, '查看同步使用说明', lambda: os.startfile(str(program_dir() / 'GitHub同步说明.md')))
+        self.button(card, '查看同步使用说明', lambda: open_path(str(program_dir() / 'GitHub同步说明.md')))
 
     def login(self):
         if self.login_running or self.features.busy_count or self.features.ai:
