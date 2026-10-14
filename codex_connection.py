@@ -130,7 +130,7 @@ def inspect_codex(explicit=''):
         raise ValueError(tr('未找到 Codex。请安装 Codex，或选择 codex.exe 的位置。'))
     client = MetadataClient(binary)
     try:
-        client.call('initialize', {'clientInfo': {'name': 'shiguang', 'title': 'Shiguang', 'version': '1.8.0'}})
+        client.call('initialize', {'clientInfo': {'name': 'shiguang', 'title': 'Shiguang', 'version': '1.9.0'}})
         client.send({'method': 'initialized', 'params': {}})
         account = client.call('account/read', {'refreshToken': False}).get('account') or {}
         models, cursor = [], None

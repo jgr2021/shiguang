@@ -139,6 +139,25 @@ class FileStore(PlannerStore):
         date_field(day)
         return [dict(r) for r in self.db.execute("SELECT DISTINCT f.id,f.title,f.original_name,f.size,f.tags,f.extraction_status,f.version FROM planner_files f JOIN planner_file_dates d ON f.id=d.file_id WHERE d.start_day<=? AND d.end_day>=? ORDER BY f.created_at DESC", (day, day))]
 
+    def attachment_page(self, query="", offset=0, limit=50):
+        """Bounded metadata pages for browsing files independently of their dates."""
+        query = query.strip().lower()
+        condition = " WHERE instr(lower(title || ' ' || original_name || ' ' || tags), ?) > 0" if query else ""
+        args = (query,) if query else ()
+        total = self.db.execute("SELECT count(*) FROM planner_files" + condition, args).fetchone()[0]
+        rows = [dict(row) for row in self.db.execute(
+            "SELECT id,title,original_name,size,tags,version,created_at FROM planner_files" + condition +
+            " ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?", args + (limit, offset))]
+        by_id = {row['id']: row for row in rows}
+        for row in rows:
+            row['dates'] = []
+        if by_id:
+            placeholders = ','.join('?' for _ in by_id)
+            for identifier, start, end in self.db.execute(
+                    "SELECT file_id,start_day,end_day FROM planner_file_dates WHERE file_id IN (" + placeholders + ") ORDER BY start_day,end_day", tuple(by_id)):
+                by_id[identifier]['dates'].append([start, end])
+        return rows, total
+
     def file_dates(self, start, end):
         counts = {}
         spans = list(self.db.execute("SELECT file_id,start_day,end_day FROM planner_file_dates WHERE start_day<=? AND end_day>=?", (end, start)))
@@ -146,6 +165,23 @@ class FileStore(PlannerStore):
             value = day.isoformat()
             counts[value] = len({r[0] for r in spans if r[1] <= value <= r[2]})
         return counts
+
+    def calendar_files(self, start, end):
+        """One metadata query for the visible month; deduplicate overlapping spans."""
+        first, last = date.fromisoformat(date_field(start)), date.fromisoformat(date_field(end))
+        rows = self.db.execute(
+            "SELECT f.id,f.title,f.original_name,d.start_day,d.end_day "
+            "FROM planner_files f JOIN planner_file_dates d ON f.id=d.file_id "
+            "WHERE d.start_day<=? AND d.end_day>=? ORDER BY f.created_at DESC,f.id",
+            (end, start))
+        result = {}
+        for row in rows:
+            item = dict(row)
+            left, right = max(first, date.fromisoformat(item['start_day'])), min(last, date.fromisoformat(item['end_day']))
+            for offset in range((right - left).days + 1):
+                day = (left + timedelta(days=offset)).isoformat()
+                result.setdefault(day, {})[item['id']] = item
+        return {day: list(items.values()) for day, items in result.items()}
 
     def validate_metadata(self, data):
         title = data.get("title", "").strip()

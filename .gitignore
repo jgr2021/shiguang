@@ -12,6 +12,12 @@ memory.md
 index.md
 AGENT.md
 credentials.dpapi
+github-token.dpapi
+github-binding.json
+accounts.json
+accounts/
+offline/
+offline-*/
 auth.json
 .env
 .env.*

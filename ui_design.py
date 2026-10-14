@@ -147,7 +147,8 @@ class SoftButton(tk.Frame):
         self.surface.bind("<Button-1>", lambda event: self.native.invoke())
         self.native.bind("<FocusIn>", lambda event: self._focus(True))
         self.native.bind("<FocusOut>", lambda event: self._focus(False))
-        self.native.bind("<Return>", lambda event: self.native.invoke())
+        self.native.bind("<Return>", lambda event: (self.native.invoke(), "break")[-1])
+        self.native.bind("<KP_Enter>", lambda event: (self.native.invoke(), "break")[-1])
         self._size()
         self._paint()
 

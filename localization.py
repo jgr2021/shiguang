@@ -1,5 +1,9 @@
 """Offline UI translations. Only application text, never user content, is translated."""
 from translations import ENGLISH, TRADITIONAL
+from github_translations import ENGLISH as GITHUB_ENGLISH, TRADITIONAL as GITHUB_TRADITIONAL
+
+ENGLISH.update(GITHUB_ENGLISH)
+TRADITIONAL.update(GITHUB_TRADITIONAL)
 
 LANGUAGES = {"zh-CN": "简体中文", "zh-TW": "繁體中文", "en": "English"}
 _language = "zh-CN"

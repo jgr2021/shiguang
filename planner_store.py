@@ -126,6 +126,13 @@ class PlannerStore:
     def note_dates(self, start, end):
         return {row[0] for row in self.db.execute("SELECT day FROM planner_notes WHERE day>=? AND day<=? AND trim(body)!=''", (date_field(start), date_field(end)))}
 
+    def note_previews(self, start, end):
+        # Fetch only a bounded excerpt per day, not the full journal on every repaint.
+        rows = self.db.execute("SELECT day,substr(ltrim(body, char(32)||char(9)||char(10)||char(13)),1,240) "
+                               "FROM planner_notes WHERE day>=? AND day<=?",
+                               (date_field(start), date_field(end)))
+        return {row[0]: row[1] for row in rows if row[1].strip()}
+
     def archive_note(self, day):
         note = self.note(day)
         require(bool(note["body"].strip()), tr('先写下一点内容再归档。'))

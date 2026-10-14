@@ -97,8 +97,18 @@ def about(features):
     body.configure(bg=P["bg"], padx=0, pady=0)
     language_box = section(body, tr('显示语言'))
     language_picker(features, top, language_box, lambda: about(features))
+    from github_accounts import binding
+    account = binding(app.store.root)
+    sync_box = section(body, tr('账号与同步'),
+                       tr('GitHub · {0}', account['login']) if account else tr('离线记录，联网后同步到自己的 GitHub 私有仓库。'))
+    button(sync_box, tr('账号与同步'), features.github.open, True).pack(anchor='w', pady=(10, 0))
+    from holiday_calendar import SOURCE_URL
+    holiday_box = section(body, tr('节假日'), tr('中国大陆 · 已收录2026年官方放假与调休安排，离线可用。未收录年份不推算调休。'))
+    button(holiday_box, tr('查看官方安排'), lambda: webbrowser.open(SOURCE_URL)).pack(anchor='w', pady=(8, 0))
     ai_box = section(body, tr('你的个人助手'), ai_description(app.store))
     button(ai_box, tr('AI 服务与 Token 设置'), lambda: open_settings(features), True).pack(anchor="w", pady=(10, 0))
+    cloud_box = section(body, tr('云文件'), tr('支持 Google Drive、OneDrive、Dropbox 等客户端的本机同步文件夹。'))
+    button(cloud_box, tr('云文件管理'), features.cloud).pack(anchor="w", pady=(10, 0))
     data_box = section(body, tr('资料与备份'))
     label(data_box, tr('个人数据目录：\n') + str(app.store.root), 9)
     row = tk.Frame(data_box, bg=BG)

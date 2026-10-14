@@ -4,16 +4,16 @@
 
 一個放在電腦裡的日曆、日記本和資料夾。記下待辦、突然的想法和每天的小小進展。沒有網路，也能繼續記錄。
 
-**[下載 Windows 安裝版 · v1.8](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-Setup-1.8.0-x64.exe)** · [免安裝 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.8.0/Shiguang-1.8.0-Windows-x64.zip)
+**[下載 Windows 安裝版 · v1.9 預覽版](https://github.com/jgr2021/shiguang/releases/download/v1.9.0/Shiguang-Setup-1.9.0-x64.exe)** · [免安裝 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.0/Shiguang-1.9.0-Windows-x64.zip)
 
 Windows 10 / 11 · 64位 · 預覽版 · [简体中文](../README.md) · [English](README.en.md)
 
-![日曆與當天待辦的實際介面，內容為虛構示例](media/app-calendar.png)
+![v1.8 日曆與當天待辦的實際介面，內容為虛構示例](media/app-calendar.png)
 
 ## 從一件小事開始
 
 1. 安裝後開啟拾光，在歡迎頁選擇繁體中文，再點「先開始記錄」。不需要寫程式或安裝 Python。
-2. 回到今天，輸入一件待辦，按 Enter 加入。需要時再補上時間與備註。
+2. 回到今天，輸入一件待辦，按 Enter 加入。需要時在目前視窗內點選時間。
 3. 切到當天日記，留下一句話。草稿會自動儲存在本機。
 
 ## 陪你度過普通的一天
@@ -30,6 +30,6 @@ Windows 10 / 11 · 64位 · 預覽版 · [简体中文](../README.md) · [Englis
 
 AI 需要網路與自己的服務商額度；使用助手時，問題、近期對話與相關記錄會傳給所選服務商。一般記錄不需要 AI。
 
-目前為未簽署的預覽版，尚無到點提醒、手機版、自動跨裝置同步、掃描文字辨識或內建網頁搜尋。
+目前為未簽署的預覽版。GitHub 私有儲存庫同步是選用功能，仍待應用程式註冊與真實帳號、雙裝置驗證；本機使用無需登入。本次已建置，未執行新版自動化測試或完整介面驗收。尚無到點提醒、手機版、掃描文字辨識或內建網頁搜尋。
 
-[完整使用說明](../開始使用.txt) · [版本更新](https://github.com/jgr2021/shiguang/releases/tag/v1.8.0) · [回報問題](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml)
+[完整使用說明](../開始使用.txt) · [版本更新](https://github.com/jgr2021/shiguang/releases/tag/v1.9.0) · [回報問題](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml)

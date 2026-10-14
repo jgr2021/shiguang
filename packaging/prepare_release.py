@@ -36,6 +36,13 @@ def main():
     for name in ("开始使用.txt", "開始使用.txt", "Getting-Started.txt"):
         (stage / name).write_text((source / name).read_text(encoding="utf-8"), encoding="utf-8-sig")
     shutil.copy2(source / 'AI连接指南.md', stage / 'AI连接指南.md')
+    shutil.copy2(source / 'GitHub同步说明.md', stage / 'GitHub同步说明.md')
+    app_registration = source / 'github-app.json'
+    if app_registration.exists():
+        registration = json.loads(app_registration.read_text(encoding='utf-8-sig'))
+        if set(registration) != {'client_id', 'slug'} or not all(isinstance(x, str) for x in registration.values()):
+            raise SystemExit('github-app.json must contain only the public client_id and slug.')
+        (stage / 'github-app.json').write_text(json.dumps(registration, indent=2), encoding='utf-8')
     licenses = stage / "licenses"
     licenses.mkdir()
     distributions = ["pypdf", "cryptography", "cffi", "pycparser", "Pillow", "brotlicffi", "typing_extensions", "packaging", "setuptools", "importlib_metadata", "zipp", "more-itertools", "jaraco.functools", "jaraco.context", "jaraco.text", "backports.tarfile", "platformdirs", "pyreadline3", "colorama", "pyinstaller", "altgraph", "pefile", "pywin32-ctypes"]
@@ -58,14 +65,14 @@ def main():
         if candidate.is_file():
             shutil.copy2(candidate, licenses / (candidate.parent.name + "-" + candidate.name))
     (stage / "THIRD-PARTY-NOTICES.txt").write_text("拾光使用 Python、Tcl/Tk、SQLite、PyInstaller 及下列第三方组件。许可证见 licenses/ 和运行库内的许可文件。\n\n" + "\n".join(notices), encoding="utf-8-sig")
-    forbidden = {"vault", "generated", "entries", "reviews", "updates", "credentials.dpapi", "auth.json", "config.json", "archive.json", "memory.md", "AGENT.md", "desktop-error.log"}
+    forbidden = {"vault", "generated", "entries", "reviews", "updates", "credentials.dpapi", "auth.json", "config.json", "archive.json", "memory.md", "AGENT.md", "desktop-error.log", "accounts", "accounts.json", "github-token.dpapi", "github-binding.json"}
     paths = list(stage.rglob("*"))
     for path in paths:
         if any(part in forbidden for part in path.relative_to(stage).parts) or path.suffix.lower() in {".sqlite3", ".db", ".log"}:
             raise SystemExit("Private-data path found in release payload: " + path.name)
     manifest = [{"path": p.relative_to(stage).as_posix(), "bytes": p.stat().st_size, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths if p.is_file()]
-    (stage / "release-manifest.json").write_text(json.dumps({"version": "1.8.0", "languages": ["zh-CN", "zh-TW", "en"], "payload": "program-only", "personal_data_included": False, "files": manifest}, ensure_ascii=False, indent=2), encoding="utf-8")
-    portable = release / "Shiguang-1.8.0-Windows-x64.zip"
+    (stage / "release-manifest.json").write_text(json.dumps({"version": "1.9.0", "languages": ["zh-CN", "zh-TW", "en"], "payload": "program-only", "personal_data_included": False, "files": manifest}, ensure_ascii=False, indent=2), encoding="utf-8")
+    portable = release / "Shiguang-1.9.0-Windows-x64.zip"
     if not args.no_zip:
         with zipfile.ZipFile(portable, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
             for path in sorted(stage.rglob("*")):

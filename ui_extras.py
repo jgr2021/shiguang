@@ -15,6 +15,7 @@ from file_store import FileStore
 from app_config import ai_description, load_ai
 from ui_design import P, FONT, SoftButton, SlimScrollbar, new_window, heading, ScrollPane, empty_state
 from attachment_widgets import TagPicker, LinkedDatePicker, split_tags
+from attachment_browser import AttachmentCards
 
 BG, INK, GREEN, MUTED = P["paper"], P["ink"], P["green"], P["muted"]
 
@@ -40,6 +41,8 @@ class Features:
         self.ai = None
         self.chat_window = None
         self.poll_job = app.after(100, self.poll)
+        from github_sync_ui import SyncController
+        self.github = SyncController(self)
 
     def settings(self):
         from settings_ui import about
@@ -55,10 +58,11 @@ class Features:
 
     def run(self, operation, callback, failure=None):
         self.busy_count += 1
+        data_root = self.app.store.root
         def worker():
             store = None
             try:
-                store = FileStore(self.app.store.root)
+                store = FileStore(data_root)
                 result = operation(store)
                 self.events.put(("callback", (callback, result)))
             except Exception as error:
@@ -92,6 +96,8 @@ class Features:
                         callback(message)
                     else:
                         messagebox.showerror(tr('操作未完成'), message, parent=self.app)
+                elif kind == "sync_progress":
+                    self.github.status.set(data)
         except queue.Empty:
             pass
         if self.ai:
@@ -126,18 +132,12 @@ class Features:
         row = tk.Frame(self.file_panel, bg=BG)
         row.pack(fill="x", pady=(0, 10))
         action(row, tr('+ 上传文件'), self.import_dialog, True).pack(side="left")
-        action(row, tr('搜索已有'), self.search).pack(side="right")
-        hint = text(self.file_panel, tr('文件保存在本机；一份文件可关联多个日期。'), 9, MUTED)
+        hint = text(self.file_panel, tr('使用「打开文件」查看内容；搜索中可查看全部附件。'), 9, MUTED)
         hint.configure(wraplength=320)
         hint.pack(fill="x", pady=(0, 10))
-        self.file_list = ttk.Treeview(self.file_panel, columns=("name", "size"), show="headings", selectmode="browse", height=7)
-        self.file_list.heading("name", text=tr('当天关联的附件'))
-        self.file_list.heading("size", text=tr('大小'))
-        self.file_list.column("name", width=220, minwidth=100)
-        self.file_list.column("size", width=65, stretch=False)
+        hint.bind('<Configure>', lambda event: hint.configure(wraplength=max(140, event.width)))
+        self.file_list = AttachmentCards(self.file_panel, self)
         self.file_list.pack(fill="both", expand=True)
-        self.file_list.bind("<Double-1>", lambda e: self.open_selected())
-        action(self.file_panel, tr('查看 / 编辑日期关联'), self.open_selected).pack(fill="x", pady=(10, 0))
         self.file_signature = None
 
     def render_files(self):
@@ -146,15 +146,20 @@ class Features:
         if signature == self.file_signature:
             return
         self.file_signature = signature
-        self.file_list.delete(*self.file_list.get_children())
-        for row in rows:
-            size = f'{row["size"] / 1048576:.1f} MB' if row["size"] >= 1048576 else f'{max(1, row["size"] // 1024)} KB'
-            self.file_list.insert("", "end", iid=row["id"], values=(row["title"], size))
+        self.app.tab_files.configure(text=tr('附件 {0}', len(rows)) if rows else tr('附件'))
+        self.file_list.show(rows)
 
-    def open_selected(self):
-        chosen = self.file_list.selection()
-        if chosen:
-            self.file_dialog(self.app.store.file(chosen[0]))
+    def open_attachment(self, identifier):
+        try:
+            self.open_file(self.app.store.file(identifier, content=False))
+        except Exception as error:
+            messagebox.showerror(tr('文件不可用'), str(error), parent=self.app)
+
+    def edit_attachment(self, identifier):
+        try:
+            self.file_dialog(self.app.store.file(identifier))
+        except Exception as error:
+            messagebox.showerror(tr('文件不可用'), str(error), parent=self.app)
 
     def import_dialog(self):
         source = filedialog.askopenfilename(parent=self.app, title=tr('选择要保存在拾光的文件'))
@@ -236,6 +241,18 @@ class Features:
             if top.winfo_exists():
                 top.destroy()
             self.app.refresh()
+            saved = result.get('file', result)
+            selected_day = self.app.selected.isoformat()
+            if not any(a <= selected_day <= b for a, b in saved['dates']):
+                from datetime import date
+                if not self.app.select_day(date.fromisoformat(saved['dates'][0][0])):
+                    self.search(show_all=True)
+                    return
+            self.app.switch_tab('files')
+            self.file_list.reveal(saved['id'])
+            library = getattr(self, 'search_browser', None)
+            if library and library.top.winfo_exists():
+                library.reload()
             self.app.notice(tr('附件已保存在本机并关联日期') + (tr('；重复文件已合并日期') if isinstance(result, dict) and result.get("status") == "linked" else ""))
         def failed(message):
             if top.winfo_exists():
@@ -279,76 +296,16 @@ class Features:
         else:
             os.startfile(str(path.parent))
 
-    def search(self):
-        existing = getattr(self, "search_window", None)
-        if existing and existing.winfo_exists():
-            existing.lift()
+    def search(self, show_all=False):
+        from search_browser import SearchBrowser
+        browser = getattr(self, 'search_browser', None)
+        if browser and browser.top.winfo_exists():
+            if show_all:
+                browser.show_all()
+            browser.top.lift()
             return
-        top = window(self.app, tr('搜索日记与文件'), "900x650")
-        self.search_window = top
-        top.bind("<Escape>", lambda event: top.destroy())
-        heading(top, tr('想到什么，就搜什么'), tr('离线查标题、正文、备注与常见同义词；更复杂的描述可以交给在线助手。'), tr('搜索日记与文件'))
-        row = tk.Frame(top, bg=P["bg"])
-        row.pack(fill="x", padx=22, pady=15)
-        query = tk.StringVar()
-        entry = ttk.Entry(row, textvariable=query, font=(FONT, 12))
-        entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        results_panel = tk.Frame(top, bg=BG, highlightthickness=1, highlightbackground=P["line"])
-        tree = ttk.Treeview(results_panel, columns=("kind", "day", "title"), show="headings", selectmode="browse")
-        for key, name, width in (("kind", tr('类型'), 70), ("day", tr('日期'), 110), ("title", tr('内容'), 560)):
-            tree.heading(key, text=name)
-            tree.column(key, width=width)
-        bar = SlimScrollbar(results_panel, command=tree.yview)
-        tree.configure(yscrollcommand=bar.set)
-        bar.pack(side="right", fill="y")
-        tree.pack(fill="both", expand=True)
-        summary = tk.StringVar(value=tr('例如：之前的简历、那个实验报告、项目成果'))
-        tk.Label(top, textvariable=summary, bg=P["bg"], fg=MUTED, font=(FONT, 10), wraplength=830, justify="left", anchor="w").pack(side="bottom", fill="x", padx=28, pady=18)
-        results_panel.pack(fill="both", expand=True, padx=28)
-        placeholder = tk.Frame(results_panel, bg=BG)
-        placeholder.place(x=1, y=48, relwidth=1, width=-16, relheight=1, height=-48)
-        empty_state(placeholder, tr('记得一点，就能开始寻找'), tr('输入一个词、一段描述，或某件事的线索。'))
-        rows, revision = {}, [0]
-        def done(result, number):
-            if not top.winfo_exists() or number != revision[0]:
-                return
-            rows.clear()
-            tree.delete(*tree.get_children())
-            for item in result:
-                rows[item["id"]] = item
-                tree.insert("", "end", iid=item["id"], values=(tr(item["kind"]), item["day"], item["title"]))
-            summary.set(tr('找到 {0} 条相关结果（最多显示100条）；双击打开。', len(result)) if result else tr('没有找到；可以换个描述，或补充附件的备注。'))
-        def submit():
-            value = query.get().strip()
-            if not value:
-                return
-            placeholder.place_forget()
-            revision[0] += 1
-            number = revision[0]
-            summary.set(tr('正在检索本机档案……'))
-            self.run(lambda store: store.search(value), lambda result: done(result, number), lambda error: summary.set(error) if top.winfo_exists() else None)
-        def select(event=None):
-            selected = tree.selection()
-            if selected:
-                summary.set(rows[selected[0]].get("snippet", ""))
-        def open_result(event=None):
-            selected = tree.selection()
-            if not selected:
-                return
-            item = rows[selected[0]]
-            if item["kind"] == "附件":
-                self.file_dialog(self.app.store.file(item["id"]))
-            else:
-                from datetime import date
-                self.app.select_day(date.fromisoformat(item["day"]))
-                self.app.switch_tab("tasks" if item["kind"] == "待办" else "note")
-                if item["kind"] == "归档":
-                    self.app.show_history()
-        tree.bind("<<TreeviewSelect>>", select)
-        tree.bind("<Double-1>", open_result)
-        action(row, tr('搜索'), submit, True).pack(side="right")
-        entry.bind("<Return>", lambda e: submit())
-        entry.focus_set()
+        self.search_browser = SearchBrowser(self)
+        self.search_window = self.search_browser.top
 
     def cloud(self):
         existing = getattr(self, "cloud_window", None)
@@ -529,6 +486,7 @@ class Features:
             button.configure(text=tr('日程草稿 {0}', len(pending_plans(self.app.store))))
 
     def close(self):
+        self.github.close()
         if self.ai:
             self.ai.cancel()
         self.app.after_cancel(self.poll_job)

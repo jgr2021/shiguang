@@ -1,10 +1,10 @@
-"""Shared point-and-click date and time fields for tasks and AI drafts."""
+"""Inline date and time controls shared by tasks and AI drafts."""
 from datetime import date, datetime, timedelta
 import tkinter as tk
 
 from diary import TZ
-from localization import tr, day_title, month_title
-from ui_design import P, FONT, SoftButton, new_window
+from localization import tr, day_title, month_title, get_language
+from ui_design import P, FONT, SoftButton, ScrollPane
 
 
 def current_day():
@@ -18,12 +18,84 @@ def calendar_cells(year, month):
             for n in range(start, start + 42)]
 
 
+class PickerPanel(tk.Frame):
+    """An anchored layer in the existing window; never changes form geometry."""
+    def __init__(self, anchor, on_close):
+        self.owner = anchor.winfo_toplevel()
+        previous = getattr(self.owner, '_schedule_picker', None)
+        if previous:
+            previous.close(False)
+        super().__init__(self.owner, bg=P['paper'],
+                         highlightbackground=P['line'], highlightthickness=1)
+        self.scroller = ScrollPane(self, bg=P['paper'])
+        self.scroller.pack(fill='both', expand=True)
+        self.content = tk.Frame(self.scroller.inner, bg=P['paper'], padx=12, pady=12)
+        self.content.pack(fill='x')
+        self.anchor, self.on_close = anchor, on_close
+        self.closed, self.handlers = False, []
+        self.owner._schedule_picker = self
+        self.bind('<Return>', lambda event: 'break')
+
+    def show(self):
+        self.owner.update_idletasks()
+        width = min(max(320, self.content.winfo_reqwidth() + 14), self.owner.winfo_width() - 20)
+        height = min(self.content.winfo_reqheight() + 2, self.owner.winfo_height() - 20)
+        left = self.anchor.winfo_rootx() - self.owner.winfo_rootx()
+        top = self.anchor.winfo_rooty() - self.owner.winfo_rooty()
+        x = max(10, min(left, self.owner.winfo_width() - width - 10))
+        y = top + self.anchor.winfo_height() + 5
+        if y + height > self.owner.winfo_height() - 10:
+            y = top - height - 5
+        y = max(10, min(y, self.owner.winfo_height() - height - 10))
+        self.place(x=x, y=y, width=width, height=height)
+        self.lift()
+        self.handlers = [('<Button-1>', self.owner.bind('<Button-1>', self.outside, add='+')),
+                         ('<Configure>', self.owner.bind('<Configure>', self.resized, add='+')),
+                         ('<MouseWheel>', self.owner.bind('<MouseWheel>', self.scroller.wheel, add='+'))]
+        def keys(widget):
+            widget.bind('<Escape>', lambda event: self.close(), add='+')
+            for child in widget.winfo_children():
+                keys(child)
+        keys(self)
+        self.focus_set()
+
+    def outside(self, event):
+        widget = str(event.widget)
+        if not any(widget == str(parent) or widget.startswith(str(parent) + '.') for parent in (self, self.anchor)):
+            self.close(False)
+
+    def resized(self, event):
+        if event.widget is self.owner:
+            self.close(False)
+
+    def close(self, restore_focus=True):
+        if self.closed:
+            return 'break'
+        self.closed = True
+        for sequence, handler in self.handlers:
+            try:
+                self.owner.unbind(sequence, handler)
+            except tk.TclError:
+                pass
+        if getattr(self.owner, '_schedule_picker', None) is self:
+            self.owner._schedule_picker = None
+        try:
+            self.destroy()
+        except tk.TclError:
+            pass
+        self.on_close()
+        if restore_focus and self.anchor.winfo_exists():
+            self.anchor.button.focus_set()
+        return 'break'
+
+
 class DateField(tk.Frame):
     def __init__(self, parent, variable, command=None):
         super().__init__(parent, bg=parent.cget('bg'))
         self.variable, self.command = variable, command
-        self.popup = None
-        self.button = SoftButton(self, '', self.open, padx=12, pady=8)
+        self.destroying = False
+        self.panel = None
+        self.button = SoftButton(self, '', self.open, padx=10, pady=8)
         self.button.pack(fill='x')
         self.trace = variable.trace_add('write', self.refresh)
         self.bind('<Destroy>', self.cleanup, add='+')
@@ -32,75 +104,75 @@ class DateField(tk.Frame):
     def refresh(self, *args):
         try:
             value = date.fromisoformat(self.variable.get())
-            text = str(value.year) + ' · ' + day_title(value)
+            caption = str(value.year) + ' · ' + day_title(value)
         except ValueError:
-            text = tr('选择日期')
-        self.button.configure(text=text + '  ▾')
+            caption = tr('选择日期')
+        self.button.configure(text=caption + ('  ▴' if self.panel else '  ▾'))
 
     def cleanup(self, event):
         if event.widget is self:
+            self.destroying = True
             self.variable.trace_remove('write', self.trace)
+            if self.panel:
+                self.panel.close(False)
+
+    def close(self, event=None):
+        if self.panel:
+            self.panel.close()
+        return 'break'
+
+    def closed(self):
+        self.panel = None
+        if not self.destroying and self.winfo_exists():
+            self.refresh()
 
     def open(self):
-        if self.popup and self.popup.winfo_exists():
-            self.popup.lift()
+        if self.panel:
+            self.close()
             return
-        owner = self.winfo_toplevel()
-        previous_grab = owner.grab_current()
         try:
             chosen = date.fromisoformat(self.variable.get())
         except ValueError:
             chosen = current_day()
-        top = self.popup = new_window(owner, tr('选择日期'), (400, 432), minimum=(380, 410))
-        top.resizable(False, False)
+        self.panel = PickerPanel(self, self.closed)
+        panel = self.panel.content
+        self.refresh()
         showing = [chosen.year, chosen.month]
-
-        def close(event=None):
-            top.destroy()
-            self.popup = None
-            if previous_grab and previous_grab.winfo_exists():
-                previous_grab.grab_set()
-            if self.winfo_exists():
-                self.button.focus_set()
-            return 'break'
+        header = tk.Frame(panel, bg=P['paper'])
+        header.pack(fill='x', pady=(0, 5))
+        caption = tk.Label(header, bg=P['paper'], fg=P['ink'], font=(FONT, 10, 'bold'))
+        caption.pack(side='left', expand=True)
+        grid = tk.Frame(panel, bg=P['paper'])
+        grid.pack(fill='x')
+        for col, name in enumerate(('一', '二', '三', '四', '五', '六', '日')):
+            grid.columnconfigure(col, weight=1, uniform='days')
+            value = ('M', 'T', 'W', 'T', 'F', 'S', 'S')[col] if get_language() == 'en' else name
+            tk.Label(grid, text=value, bg=P['paper'], fg=P['muted'], font=(FONT, 8)).grid(row=0, column=col, pady=4)
+        buttons = []
 
         def pick(value):
             self.variable.set(value.isoformat())
-            close()
+            self.close()
             if self.command:
                 self.command()
-
-        body = tk.Frame(top, bg=P['paper'], padx=18, pady=16)
-        body.pack(fill='both', expand=True, padx=12, pady=12)
-        header = tk.Frame(body, bg=P['paper'])
-        header.pack(fill='x', pady=(0, 8))
-        caption = tk.Label(header, text='', bg=P['paper'], fg=P['ink'], font=(FONT, 12, 'bold'))
-        caption.pack(side='left', expand=True)
-        grid = tk.Frame(body, bg=P['paper'])
-        grid.pack(fill='both', expand=True)
-        for col, text in enumerate(('一', '二', '三', '四', '五', '六', '日')):
-            grid.columnconfigure(col, weight=1, uniform='days')
-            tk.Label(grid, text=tr('周' + text), font=(FONT, 9), bg=P['paper'], fg=P['muted']).grid(row=0, column=col, pady=(0, 6))
-        buttons = []
 
         def render():
             caption.configure(text=month_title(date(*showing, 1)))
             prev.configure(state='disabled' if showing == [1, 1] else 'normal')
             nxt.configure(state='disabled' if showing == [9999, 12] else 'normal')
-            for b in buttons:
-                b.destroy()
+            for widget in buttons:
+                widget.destroy()
             buttons.clear()
-            for i, value in enumerate(calendar_cells(*showing)):
-                selected = value == chosen
-                b = SoftButton(grid, str(value.day) if value else '', lambda d=value: pick(d),
-                               bg=P['green'] if selected else P['pale'] if value == current_day() else P['paper'],
-                               fg='white' if selected else P['ink'] if value and value.month == showing[1] else P['muted'],
-                               font=(FONT, 10), padx=0, pady=6)
+            for index, value in enumerate(calendar_cells(*showing)):
+                button = SoftButton(grid, str(value.day) if value else '', lambda d=value: pick(d),
+                                    bg=P['green'] if value == chosen else P['paper'],
+                                    fg='white' if value == chosen else P['ink'] if value and value.month == showing[1] else P['muted'],
+                                    font=(FONT, 9), padx=1, pady=4)
                 if value is None:
-                    b.configure(state='disabled')
-                b.grid(row=i // 7 + 1, column=i % 7, sticky='nsew', padx=1, pady=1)
-                grid.rowconfigure(i // 7 + 1, weight=1)
-                buttons.append(b)
+                    button.configure(state='disabled')
+                button.grid(row=index // 7 + 1, column=index % 7, sticky='ew', padx=1, pady=1)
+                button.native.bind('<Escape>', self.close)
+                buttons.append(button)
 
         def shift(step):
             index = (showing[0] - 1) * 12 + showing[1] - 1 + step
@@ -108,118 +180,134 @@ class DateField(tk.Frame):
                 showing[:] = [index // 12 + 1, index % 12 + 1]
                 render()
 
-        prev = SoftButton(header, '‹', lambda: shift(-1), padx=10, pady=3)
-        prev.pack(side='left', padx=(0, 5))
-        nxt = SoftButton(header, '›', lambda: shift(1), padx=10, pady=3)
+        prev = SoftButton(header, '‹', lambda: shift(-1), padx=7, pady=2)
+        prev.pack(side='left')
+        nxt = SoftButton(header, '›', lambda: shift(1), padx=7, pady=2)
         nxt.pack(side='left')
-        shortcuts = tk.Frame(body, bg=P['paper'])
-        shortcuts.pack(fill='x', pady=(12, 0))
-        SoftButton(shortcuts, tr('今天'), lambda: pick(current_day()), padx=12, pady=6).pack(side='left')
-        SoftButton(shortcuts, tr('明天'), lambda: pick(current_day() + timedelta(days=1)), padx=12, pady=6).pack(side='left', padx=8)
-        SoftButton(shortcuts, tr('取消'), close, padx=12, pady=6).pack(side='right')
-        top.protocol('WM_DELETE_WINDOW', close)
-        top.bind('<Escape>', close)
-        top.bind('<Control-Return>', lambda e: 'break')
+        shortcuts = tk.Frame(panel, bg=P['paper'])
+        shortcuts.pack(fill='x', pady=(6, 0))
+        for title, command in ((tr('今天'), lambda: pick(current_day())),
+                               (tr('明天'), lambda: pick(current_day() + timedelta(days=1))),
+                               (tr('收起'), self.close)):
+            SoftButton(shortcuts, title, command, font=(FONT, 9), padx=7, pady=4).pack(side='left', padx=1)
         render()
-        def focus():
-            if top.winfo_exists():
-                top.grab_set()
-                buttons[next(i for i,d in enumerate(calendar_cells(*showing)) if d == chosen)].native.focus_set()
-        top.after_idle(focus)
+        self.panel.show()
 
 
 class TimeField(tk.Frame):
-    """A compact field opening a clock panel; no formatting or long dropdowns."""
+    """One time button with a clock picker layered inside the current window."""
     def __init__(self, parent, variable, command=None):
         super().__init__(parent, bg=parent.cget('bg'))
         self.variable, self.command = variable, command
+        self.destroying = False
         value = variable.get()
-        hour, minute = value.split(':') if value else ('09', '00')
+        self.hour, self.minute = map(int, value.split(':')) if value else (9, 0)
         self.all_day = tk.BooleanVar(value=not value)
-        self.hour, self.minute = int(hour), int(minute)
-        self.popup = None
-        tk.Checkbutton(self, text=tr('全天'), variable=self.all_day, command=self.update_value,
-                       bg=self.cget('bg'), activebackground=self.cget('bg'), fg=P['ink'],
-                       font=(FONT, 10), padx=0).pack(side='left', padx=(0, 10))
-        self.button = SoftButton(self, '', self.open, padx=14, pady=8)
-        self.button.pack(side='left', fill='x', expand=True)
+        self.panel = None
+        self.button = SoftButton(self, '', self.open, padx=12, pady=8)
+        self.button.pack(fill='x')
+        self.bind('<Destroy>', self.cleanup, add='+')
         self.paint()
 
     def paint(self):
-        self.button.configure(text=(tr('选择时间') if self.all_day.get() else f'{self.hour:02}:{self.minute:02}') + '  ▾')
+        value = tr('全天') if self.all_day.get() else f'{self.hour:02}:{self.minute:02}'
+        self.button.configure(text=value + ('  ▴' if self.panel else '  ▾'))
 
-    def update_value(self, event=None):
+    def cleanup(self, event):
+        if event.widget is self:
+            self.destroying = True
+            if self.panel:
+                self.panel.close(False)
+
+    def closed(self):
+        self.panel = None
+        if not self.destroying and self.winfo_exists():
+            self.paint()
+
+    def reset(self):
+        if self.panel:
+            self.panel.close(False)
+        self.hour, self.minute = 9, 0
+        self.all_day.set(True)
+        self.update_value()
+
+    def update_value(self):
         self.variable.set('' if self.all_day.get() else f'{self.hour:02}:{self.minute:02}')
         self.paint()
         if self.command:
             self.command()
 
     def open(self):
-        if self.popup and self.popup.winfo_exists():
-            self.popup.lift()
+        if self.panel:
+            self.panel.close()
             return
-        owner = self.winfo_toplevel()
-        previous_grab = owner.grab_current()
-        top = self.popup = new_window(owner, tr('选择时间'), (420, 530), minimum=(400, 510))
-        top.resizable(False, False)
-        selected = [self.hour, self.minute]
-
-        def close(event=None):
-            top.destroy()
-            self.popup = None
-            if previous_grab and previous_grab.winfo_exists():
-                previous_grab.grab_set()
-            if self.winfo_exists():
-                self.button.native.focus_set()
-            return 'break'
-
-        def confirm(event=None):
-            self.hour, self.minute = selected
-            self.all_day.set(False)
-            self.update_value()
-            return close()
-
-        footer = tk.Frame(top, bg=P['bg'], padx=22, pady=14)
-        footer.pack(side='bottom', fill='x')
-        SoftButton(footer, tr('确定'), confirm, True).pack(side='right')
-        SoftButton(footer, tr('取消'), close).pack(side='right', padx=10)
-        body = tk.Frame(top, bg=P['paper'], padx=20, pady=14)
-        body.pack(fill='both', expand=True, padx=14, pady=(14, 0))
-        preview = tk.Label(body, font=(FONT, 26, 'bold'), fg=P['green'], bg=P['paper'])
-        preview.pack(fill='x', pady=(0, 12))
+        self.panel = PickerPanel(self, self.closed)
+        popup, body = self.panel, self.panel.content
+        selected, part = [self.hour, self.minute], [0]
+        preview = tk.Label(body, text='', bg=P['paper'], fg=P['green'], font=(FONT, 22, 'bold'))
+        preview.pack(fill='x', pady=(0, 6))
+        tabs = tk.Frame(body, bg=P['paper'])
+        tabs.pack(fill='x', pady=(0, 8))
+        grid = tk.Frame(body, bg=P['paper'])
+        grid.pack(fill='x')
+        for col in range(6):
+            grid.columnconfigure(col, weight=1, uniform='clock')
         choices = []
+        def commit(all_day=False):
+            self.hour, self.minute = selected
+            self.all_day.set(all_day)
+            popup.close()
+            self.update_value()
 
-        def paint():
+        def render():
             preview.configure(text=f'{selected[0]:02}:{selected[1]:02}')
-            for button, part, value in choices:
-                active = selected[part] == value
-                button.configure(bg=P['green'] if active else P['soft'], fg='white' if active else P['ink'])
+            hours.configure(bg=P['pale'] if part[0] == 0 else P['paper'])
+            minutes.configure(bg=P['pale'] if part[0] == 1 else P['paper'])
+            for widget in choices:
+                widget.destroy()
+            choices.clear()
+            values = range(24) if part[0] == 0 else range(0, 60, 5)
+            for index, value in enumerate(values):
+                active = selected[part[0]] == value
+                control = SoftButton(grid, f'{value:02}', lambda n=value: pick(n),
+                                     bg=P['green'] if active else P['soft'], fg='white' if active else P['ink'],
+                                     font=(FONT, 10), padx=4, pady=5)
+                control.grid(row=index // 6, column=index % 6, sticky='ew', padx=2, pady=2)
+                control.native.bind('<Escape>', lambda event: popup.close())
+                choices.append(control)
 
-        def choose(part, value):
-            selected[part] = value
-            paint()
+        def pick(value):
+            selected[part[0]] = value
+            if part[0] == 0:
+                part[0] = 1
+                render()
+            else:
+                commit()
 
-        for part, title, values in ((0, tr('小时'), range(24)), (1, tr('分钟'), range(0, 60, 5))):
-            tk.Label(body, text=title, font=(FONT, 9), bg=P['paper'], fg=P['muted']).pack(anchor='w', pady=(6, 4))
-            grid = tk.Frame(body, bg=P['paper'])
-            grid.pack(fill='x')
-            for col in range(6):
-                grid.columnconfigure(col, weight=1, uniform='clock')
-            for i, value in enumerate(values):
-                button = SoftButton(grid, f'{value:02}', lambda p=part, v=value: choose(p, v), padx=5, pady=5)
-                button.grid(row=i // 6, column=i % 6, sticky='ew', padx=2, pady=2)
-                choices.append((button, part, value))
-        fine = tk.Frame(body, bg=P['paper'])
-        fine.pack(fill='x', pady=(10, 0))
-        SoftButton(fine, '−', lambda: choose(1, (selected[1] - 1) % 60), padx=14, pady=4).pack(side='left')
-        tk.Label(fine, text=tr('微调 1 分钟'), font=(FONT, 9), bg=P['paper'], fg=P['muted']).pack(side='left', expand=True)
-        SoftButton(fine, '+', lambda: choose(1, (selected[1] + 1) % 60), padx=14, pady=4).pack(side='right')
-        paint()
-        top.protocol('WM_DELETE_WINDOW', close)
-        top.bind('<Escape>', close)
-        top.bind('<Control-Return>', confirm)
-        def focus():
-            if top.winfo_exists():
-                top.grab_set()
-                choices[selected[0]][0].native.focus_set()
-        top.after_idle(focus)
+        def switch(value):
+            part[0] = value
+            render()
+
+        def fine(step):
+            total = (selected[0] * 60 + selected[1] + step) % (24 * 60)
+            selected[:] = [total // 60, total % 60]
+            part[0] = 1
+            render()
+
+        hours = SoftButton(tabs, tr('小时'), lambda: switch(0), padx=10, pady=5)
+        hours.pack(side='left', fill='x', expand=True)
+        minutes = SoftButton(tabs, tr('分钟'), lambda: switch(1), padx=10, pady=5)
+        minutes.pack(side='left', fill='x', expand=True)
+        fine_row = tk.Frame(body, bg=P['paper'])
+        fine_row.pack(fill='x', pady=(8, 0))
+        SoftButton(fine_row, '−', lambda: fine(-1), padx=10, pady=4).pack(side='left')
+        tk.Label(fine_row, text=tr('微调 1 分钟'), bg=P['paper'], fg=P['muted'], font=(FONT, 9)).pack(side='left', expand=True)
+        SoftButton(fine_row, '+', lambda: fine(1), padx=10, pady=4).pack(side='right')
+        footer = tk.Frame(body, bg=P['paper'])
+        footer.pack(fill='x', pady=(10, 0))
+        SoftButton(footer, tr('全天'), lambda: commit(True), padx=12, pady=5).pack(side='left')
+        SoftButton(footer, tr('确定'), commit, True, padx=12, pady=5).pack(side='right')
+        SoftButton(footer, tr('取消'), popup.close, padx=10, pady=5).pack(side='right', padx=6)
+        render()
+        self.paint()
+        popup.show()

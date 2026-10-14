@@ -1,4 +1,4 @@
-Shiguang 1.8.0 · Preview
+Shiguang 1.9.0 · Preview
 A little progress, every day.
 
 Pick dates from a calendar and times from hour/minute buttons. All-day events and one-minute adjustments are supported.
@@ -48,7 +48,7 @@ Reported token usage can include multiple requests and is not a cost guarantee.
 API mode has no built-in web search and cannot verify up-to-date external information.
 
 RESUMES
-Upload an existing resume first. Mention its coverage date in the notes or your question when known.
+Upload an existing resume first. Mention its coverage date in your question when known.
 The assistant can read the resume and later achievements to produce a new Word and Markdown version, with source IDs. Originals are not overwritten.
 Check facts, dates and numbers before sharing generated documents. Missing records or unclear dates should be raised in the reply.
 
@@ -58,7 +58,7 @@ Settings → Open data folder shows the actual location.
 Existing personal folders containing vault/diary.sqlite3 continue using that location.
 Tokens are encrypted using Windows DPAPI in credentials.dpapi, scoped to each API address.
 Normal ZIP backups exclude credentials. Enter tokens again after moving to another Windows account or computer.
-The app has no public account system, usage analytics, automatic journal upload or shared key.
+Local recording requires no sign-in and includes no usage analytics or shared key. Only explicitly configured and enabled GitHub sync uploads selected data to your own private repository.
 Tokens are sent only in authentication headers to the configured endpoint, not in conversation content.
 API redirects are blocked. Cloud APIs require HTTPS; local loopback APIs may use HTTP.
 
@@ -68,14 +68,14 @@ Exporting does not confirm a completed cloud upload; check your cloud client for
 This is not a quota-checking service or two-way database sync.
 
 BACKUP, UPGRADE AND UNINSTALL
-Use Backup regularly. Full backups include journals, tasks, drafts, attachments, conversations and generated documents.
+Use Settings → Export full backup regularly. Full backups include journals, tasks, drafts, attachments, conversations and generated documents.
 Run a newer installer to upgrade. Program files are separate from personal data.
 Windows uninstall removes the program and retains journals and encrypted tokens.
 Before restoring a backup, close the app and preserve a copy of the current data folder. Restore vault/, generated/ and other files using the ZIP’s original structure.
 Share the installer or clean program ZIP with friends, rather than your data folder.
 
 PREVIEW SCOPE
-Automatic updates, account services, tray reminders and built-in web search are not included.
+Automatic updates, tray reminders and built-in web search are not included. Optional GitHub sync still awaits app registration and live verification.
 The original owner’s Codex chat and scheduled task are not part of the distributed app.
 Archiving does not launch another person’s Codex task. Ask the assistant directly to review your records.
 
@@ -92,3 +92,8 @@ API presets add Gemini, Kimi, OpenRouter and SiliconFlow. Read model lists, choo
 
 Version 1.7 — Calendar drafts and chat
 Choose Plan my day to enable calendar drafting. Describe dates and tasks; review, edit and select the generated draft before adding it. Drafts persist across restarts. Existing tasks are not changed. Enter sends; Ctrl+Enter inserts a new line. Export backups from Settings. Codex discovery now distinguishes the CLI from the desktop executable.
+
+1.9 PREVIEW: LOCAL USE AND OPTIONAL SYNC
+No GitHub login is required for local recording. Account and sync settings are optional; app registration and live verification are still pending, and this package has no registered app configuration. You can skip them. See GitHub同步说明.md for permissions, private repositories, attachment limits and conflicts.
+Calendar cells show task summaries, journal excerpts and file names, with offline mainland China holiday labels for 2026. File titles do not open attachments; use the explicit Open button. Search lists all attachments newest first by default.
+This version has been built, but new automated tests, full UI validation and real two-device sync verification have not been performed.

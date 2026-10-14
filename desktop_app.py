@@ -1,6 +1,7 @@
 """Shiguang: a fully local Tk desktop calendar. No network services required."""
 from localization import tr, set_language, get_language, LANGUAGES, month_title, day_title
 import argparse
+import calendar
 from datetime import date, datetime, timedelta
 import hashlib
 from pathlib import Path
@@ -13,6 +14,9 @@ from diary import TZ
 from file_store import FileStore
 from ui_extras import Features
 from schedule_widgets import DateField, TimeField
+from calendar_cells import CalendarDayCell, day_preview
+from chat_keys import ime_composing
+from holiday_calendar import holiday_info
 from app_config import bootstrap, default_data_dir, program_dir
 from ui_design import P, FONT, SoftButton, SlimScrollbar, ScrollPane, prepare_window, new_window, heading, empty_state, install_styles, decorate
 
@@ -40,7 +44,8 @@ class TaskDialog(tk.Toplevel):
         owner = owner or app
         super().__init__(owner)
         self.app, self.task = app, task
-        prepare_window(self, owner, tr('编辑待办') if task else tr('安排一件事'), (610, 655), (500, 420),
+        self.saving = False
+        prepare_window(self, owner, tr('编辑待办') if task else tr('安排一件事'), (610, 500), (500, 420),
                        on_show=lambda: (self.grab_set(), title_entry.focus_set()))
         heading(self, tr('编辑待办') if task else tr('安排一件事'), tr('给想做的事，留一个合适的位置。'), tr('日程安排'))
         controls = tk.Frame(self, bg=P["bg"], padx=28, pady=18)
@@ -56,7 +61,7 @@ class TaskDialog(tk.Toplevel):
         dates = tk.Frame(frame, bg=P["paper"])
         dates.pack(fill="x")
         self.day_var = tk.StringVar(value=task["day"] if task else (day or app.selected).isoformat())
-        self.time_var = tk.StringVar(value=task["at_time"] if task else "")
+        self.time_var = tk.StringVar(value=task["at_time"] if task else app.quick_time_var.get())
         for text, variable, widget, column in ((tr('日期'), self.day_var, DateField, 0), (tr('时间'), self.time_var, TimeField, 1)):
             area = tk.Frame(dates, bg=P["paper"])
             area.grid(row=0, column=column, sticky="ew", padx=(0, 12) if column == 0 else (0, 0))
@@ -65,27 +70,40 @@ class TaskDialog(tk.Toplevel):
             widget(area, variable).pack(fill="x", pady=(6, 12))
         self.priority_var = tk.IntVar(value=task["priority"] if task else 0)
         tk.Checkbutton(frame, text=tr('标为重要'), variable=self.priority_var, bg=P["paper"], fg=P["ink"], activebackground=P["paper"], font=(FONT, 10), anchor="w").pack(fill="x", pady=(0, 10))
-        label(frame, tr('备注'), 10).pack(anchor="w")
-        self.notes = tk.Text(frame, height=5, width=44, font=(FONT, 10), bg=P["soft"], fg=P["ink"], relief="flat", padx=10, pady=10, wrap="word", undo=True)
-        self.notes.pack(fill="x", pady=(6, 18))
-        if task:
-            self.notes.insert("1.0", task["notes"])
+        label(frame, tr('Enter 保存待办'), 9, P["muted"]).pack(anchor="w", pady=(6, 0))
         if task:
             button(controls, tr('删除'), self.remove, fg=P["red"]).pack(side="left")
         button(controls, tr('保存待办'), self.save, primary=True).pack(side="right")
         button(controls, tr('取消'), self.destroy).pack(side="right", padx=10)
         self.bind("<Escape>", lambda event: self.destroy())
-        self.bind("<Control-Return>", lambda event: self.save())
+        self.bind("<Return>", self.save_key)
+        self.bind("<KP_Enter>", self.save_key)
+        self.bind("<Control-Return>", self.save_key)
+
+    def save_key(self, event):
+        if event.widget.winfo_class() == 'TCombobox':
+            return None
+        if event.widget.winfo_class() in {"Button", "TButton"} and not event.state & 4:
+            return None
+        if ime_composing(event.widget):
+            return None
+        self.save()
+        return "break"
 
     def save(self):
+        if self.saving:
+            return
+        self.saving = True
         try:
-            data = {"day": self.day_var.get().strip(), "title": self.title_var.get(), "at_time": self.time_var.get().strip(), "priority": self.priority_var.get(), "notes": self.notes.get("1.0", "end-1c"), "done": self.task["done"] if self.task else 0}
+            data = {"day": self.day_var.get().strip(), "title": self.title_var.get(), "at_time": self.time_var.get().strip(), "priority": self.priority_var.get(), "notes": self.task["notes"] if self.task else "", "done": self.task["done"] if self.task else 0}
             self.app.store.save_task(data, self.task["id"] if self.task else None, self.task["version"] if self.task else None)
         except Exception as error:
+            self.saving = False
             messagebox.showerror(tr('还没有保存'), str(error), parent=self)
             return
         if not self.task:
             self.app.quick_var.set("")
+            self.app.quick_time.reset()
         self.app.refresh()
         self.app.notice(tr('待办已保存在本机'))
         self.destroy()
@@ -103,14 +121,16 @@ class TaskDialog(tk.Toplevel):
 
 
 class PlannerApp(tk.Tk):
-    def __init__(self, data_root, initial_language=None):
+    def __init__(self, data_root, initial_language=None, account_home=None):
         super().__init__()
         self.title(tr('拾光日历'))
         self.configure(bg=P["bg"])
-        self.geometry("%dx%d" % (min(1280, self.winfo_screenwidth() - 70), min(780, self.winfo_screenheight() - 155)))
+        self.geometry("%dx%d" % (min(1400, self.winfo_screenwidth() - 70), min(860, self.winfo_screenheight() - 155)))
         self.minsize(1000, 630)
         bootstrap(data_root)
         self.store = FileStore(data_root)
+        self.account_home = Path(account_home or data_root).resolve()
+        self.next_profile = None
         if not self.store.setting("ui_language") and initial_language in LANGUAGES:
             self.store.set_setting("ui_language", initial_language)
         set_language(self.store.setting("ui_language", "zh-CN"))
@@ -134,7 +154,9 @@ class PlannerApp(tk.Tk):
         self.note_dirty = False
         self.save_job = None
         self.clock_job = None
+        self.notice_job = None
         self.quick_var = tk.StringVar()
+        self.quick_time_var = tk.StringVar()
         install_styles(self)
         self.build()
         self.load_note()
@@ -151,32 +173,19 @@ class PlannerApp(tk.Tk):
         self.after_idle(lambda: decorate(self))
 
     def build(self):
-        header = tk.Frame(self, bg=P["bg"], padx=28, pady=16)
+        header = tk.Frame(self, bg=P["bg"], padx=24, pady=10)
         header.pack(fill="x")
-        mark = tk.Canvas(header, width=43, height=43, bg=P["bg"], highlightthickness=0)
-        mark.create_rectangle(3, 3, 40, 40, fill=P["green"], outline="")
-        mark.create_rectangle(11, 12, 32, 31, outline="#FFFFFF", width=2)
-        mark.create_line(11, 18, 32, 18, fill="#FFFFFF", width=2)
-        mark.create_line(16, 9, 16, 14, fill="#FFFFFF", width=2)
-        mark.create_line(27, 9, 27, 14, fill="#FFFFFF", width=2)
-        mark.create_oval(23, 23, 27, 27, fill="#DBEAC3", outline="")
-        mark.pack(side="left", padx=(0, 12))
-        names = tk.Frame(header, bg=P["bg"])
-        names.pack(side="left")
-        label(names, tr('拾光日历'), 20, bold=True).pack(anchor="w")
-        label(names, tr('每天一点，慢慢向前。'), 9, P["muted"]).pack(anchor="w", pady=(3, 0))
         button(header, tr('设置'), self.features.settings).pack(side="right", padx=(0, 10))
         self.open_button = button(header, tr('所有待办'), self.all_tasks)
         self.open_button.pack(side="right", padx=(0, 10))
         button(header, tr('拾光助手'), self.features.chat, primary=True).pack(side="right", padx=(0, 10))
-        button(header, tr('云文件'), self.features.cloud).pack(side="right", padx=(0, 10))
         button(header, tr('搜索'), self.features.search).pack(side="right", padx=(0, 10))
         body = tk.Frame(self, bg=P["bg"])
-        body.pack(fill="both", expand=True, padx=28, pady=(0, 14))
-        body.columnconfigure(0, weight=3, minsize=470)
-        body.columnconfigure(1, weight=2, minsize=345)
+        body.pack(fill="both", expand=True, padx=24, pady=(0, 12))
+        body.columnconfigure(0, weight=6, minsize=570)
+        body.columnconfigure(1, weight=1, minsize=330)
         body.rowconfigure(0, weight=1)
-        calendar_panel = tk.Frame(body, bg=P["paper"], padx=20, pady=20)
+        calendar_panel = tk.Frame(body, bg=P["paper"], padx=16, pady=16)
         calendar_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 18))
         month_header = tk.Frame(calendar_panel, bg=P["paper"])
         month_header.pack(fill="x", pady=(0, 18))
@@ -195,12 +204,12 @@ class PlannerApp(tk.Tk):
         self.calendar_grid.pack(fill="both", expand=True)
         legend = tk.Frame(calendar_panel, bg=P["paper"])
         legend.pack(fill="x", pady=(15, 0))
-        label(legend, tr('● 日记   ▣ 附件   ·  绿色标记为今天'), 9, P["muted"]).pack(side="left")
+        label(legend, tr('点击内容查看，停留看摘要'), 9, P["muted"]).pack(side="left")
         self.month_count = label(legend, "", 9, P["green"])
         self.month_count.pack(side="right")
-        self.detail = tk.Frame(body, bg=P["paper"], padx=22, pady=20)
+        self.detail = tk.Frame(body, bg=P["paper"], padx=18, pady=16)
         self.detail.grid(row=0, column=1, sticky="nsew")
-        self.detail.configure(width=370)
+        self.detail.configure(width=335)
         self.detail.pack_propagate(False)
         self.day_heading = label(self.detail, size=20, bold=True)
         self.day_heading.pack(anchor="w")
@@ -208,22 +217,25 @@ class PlannerApp(tk.Tk):
         self.day_description.pack(anchor="w", pady=(5, 18))
         tabs = tk.Frame(self.detail, bg=P["paper"])
         tabs.pack(fill="x", pady=(0, 15))
-        self.tab_tasks = button(tabs, tr('当天待办'), lambda: self.switch_tab("tasks"))
+        self.tab_tasks = button(tabs, tr('待办'), lambda: self.switch_tab("tasks"), padx=9)
         self.tab_tasks.pack(side="left", fill="x", expand=True, padx=(0, 5))
-        self.tab_note = button(tabs, tr('当天日记'), lambda: self.switch_tab("note"))
+        self.tab_note = button(tabs, tr('日记'), lambda: self.switch_tab("note"), padx=9)
         self.tab_note.pack(side="left", fill="x", expand=True, padx=(5, 0))
-        self.tab_files = button(tabs, tr('附件'), lambda: self.switch_tab("files"))
+        self.tab_files = button(tabs, tr('附件'), lambda: self.switch_tab("files"), padx=9)
         self.tab_files.pack(side="left", fill="x", expand=True, padx=(5, 0))
         self.task_panel = tk.Frame(self.detail, bg=P["paper"])
         self.task_panel.pack(fill="both", expand=True)
         self.quick = ttk.Entry(self.task_panel, textvariable=self.quick_var, font=(FONT, 11))
         self.quick.pack(fill="x", ipady=4)
-        self.quick.bind("<Return>", lambda event: self.quick_add())
+        self.quick.bind("<Return>", self.quick_enter)
+        self.quick.bind("<KP_Enter>", self.quick_enter)
         label(self.task_panel, tr('写下一件事，按 Enter 添加'), 9, P["muted"]).pack(anchor="w", pady=(6, 10))
         addrow = tk.Frame(self.task_panel, bg=P["paper"])
         addrow.pack(fill="x", pady=(0, 13))
-        button(addrow, tr('+ 添加待办'), self.quick_add, primary=True).pack(side="left")
-        button(addrow, tr('时间 / 备注'), self.open_editor).pack(side="left", padx=8)
+        label(self.task_panel, tr('时间'), 9, P["muted"]).pack(before=addrow, anchor="w", pady=(0, 5))
+        self.quick_time = TimeField(addrow, self.quick_time_var, command=lambda: self.quick.focus_set())
+        self.quick_time.pack(fill="x", pady=(0, 10))
+        button(addrow, tr('+ 添加待办'), self.quick_add, primary=True).pack(anchor="w")
         self.tasks_scroll = ScrollFrame(self.task_panel)
         self.tasks_scroll.pack(fill="both", expand=True)
         self.task_summary = label(self.task_panel, size=9, color=P["muted"])
@@ -242,15 +254,27 @@ class PlannerApp(tk.Tk):
         self.note_status = label(self.note_panel, "", 9, P["muted"])
         self.note_status.pack(anchor="w", pady=(9, 10))
         self.features.build_files(self.detail)
-        footer = tk.Frame(self, bg=P["bg"], padx=30, pady=10)
-        footer.pack(fill="x")
-        self.status = label(footer, tr('离线日历 · 所有记录保存在这台电脑'), 9, P["muted"])
-        self.status.pack(side="left")
-        label(footer, tr('Ctrl+N 新待办    Ctrl+S 保存日记    Ctrl+T 今天'), 9, P["muted"]).pack(side="right")
+        if self.notice_job:
+            self.after_cancel(self.notice_job)
+            self.notice_job = None
+        self.notice_box = tk.Frame(self, bg=P["paper"], padx=14, pady=9,
+                                   highlightbackground=P["line"], highlightthickness=1)
+        self.status = label(self.notice_box, "", 9, P["green"], wraplength=440, justify="left")
+        self.status.pack()
         self.paint_tabs()
 
     def notice(self, text, error=False):
+        if self.notice_job:
+            self.after_cancel(self.notice_job)
         self.status.configure(text=text, fg=P["red"] if error else P["green"])
+        # Only show feedback after an action; there is no permanent footer.
+        self.notice_box.place(relx=0.5, y=60, anchor="n")
+        self.notice_box.lift()
+        self.notice_job = self.after(8000 if error else 3500, self.hide_notice)
+
+    def hide_notice(self):
+        self.notice_job = None
+        self.notice_box.place_forget()
 
     def apply_language(self, code, source_window, reopen):
         if code not in LANGUAGES:
@@ -300,10 +324,11 @@ class PlannerApp(tk.Tk):
     def render_calendar(self):
         self.month_label.configure(text=month_title(self.month))
         start = self.month - timedelta(days=self.month.weekday())
-        dates = [start + timedelta(days=n) for n in range(42)]
+        weeks = (self.month.weekday() + calendar.monthrange(self.month.year, self.month.month)[1] + 6) // 7
+        dates = [start + timedelta(days=n) for n in range(weeks * 7)]
         tasks = self.store.tasks(dates[0].isoformat(), dates[-1].isoformat())
-        notes = self.store.note_dates(dates[0].isoformat(), dates[-1].isoformat())
-        files = self.store.file_dates(dates[0].isoformat(), dates[-1].isoformat())
+        notes = self.store.note_previews(dates[0].isoformat(), dates[-1].isoformat())
+        files = self.store.calendar_files(dates[0].isoformat(), dates[-1].isoformat())
         by_day = {}
         for task in tasks:
             by_day.setdefault(task["day"], []).append(task)
@@ -311,53 +336,46 @@ class PlannerApp(tk.Tk):
         for col in range(7):
             self.calendar_grid.columnconfigure(col, weight=1, uniform="dates")
         for row in range(6):
-            self.calendar_grid.rowconfigure(row, weight=1, uniform="dates", minsize=60)
+            self.calendar_grid.rowconfigure(row, weight=1 if row < weeks else 0,
+                                            uniform="dates" if row < weeks else "", minsize=60 if row < weeks else 0)
+        for cell in self.calendar_cells[len(dates):]:
+            cell.hide_tip()
+            cell.grid_remove()
         for index, day in enumerate(dates):
             selected, current = day == self.selected, day.month == self.month.month
-            bg = P["pale"] if selected else P["paper"] if current else "#FAFBF8"
             if index >= len(self.calendar_cells):
-                frame = tk.Frame(self.calendar_grid, padx=4, pady=4, highlightthickness=2, cursor="hand2")
-                frame.grid(row=index // 7, column=index % 7, sticky="nsew", padx=1, pady=1)
-                frame.pack_propagate(False)
-                number = label(frame, size=10, anchor="w", width=1)
-                number.pack(fill="x")
-                count = label(frame, size=8, anchor="w", width=1)
-                count.pack(fill="x", pady=(2, 0))
-                marks = label(frame, size=8, anchor="w", width=1)
-                marks.pack(fill="x")
-                cell = {"frame": frame, "number": number, "count": count, "marks": marks, "day": day, "signature": None}
-                for widget in (frame, number, count, marks):
-                    widget.bind("<Button-1>", lambda event, chosen=cell: self.select_day(chosen["day"]))
-                self.calendar_cells.append(cell)
+                self.calendar_cells.append(CalendarDayCell(self.calendar_grid, self.open_calendar_day))
             cell = self.calendar_cells[index]
-            cell["day"] = day
-            records = by_day.get(day.isoformat(), [])
-            finished = sum(task["done"] for task in records)
-            count_text = (tr('{0} 项', len(records)) + (f" · {finished} ✓" if finished else " ···")) if records else ""
-            marks_text = ("● " if day.isoformat() in notes else "") + (f"▣ {files[day.isoformat()]}" if files.get(day.isoformat()) else "")
-            signature = (day, selected, current, actual_today, count_text, marks_text)
-            if cell["signature"] != signature:
-                cell["signature"] = signature
-                cell["frame"].configure(bg=bg, highlightbackground=P["green"] if selected else bg)
-                cell["number"].configure(text=tr('{0} 今天', day.day) if day == actual_today else str(day.day), bg=P["green"] if day == actual_today else bg, fg="white" if day == actual_today else P["ink"] if current else "#B1B7B0", font=(FONT, 10, "bold" if selected or day == actual_today else "normal"))
-                cell["count"].configure(text=count_text, bg=bg, fg=P["muted"] if records and finished == len(records) else P["green"])
-                cell["marks"].configure(text=marks_text, bg=bg, fg=P["green"])
+            cell.grid(row=index // 7, column=index % 7, sticky="nsew", padx=1, pady=1)
+            key = day.isoformat()
+            rows = day_preview(by_day.get(key, []), notes.get(key, ""), files.get(key, []))
+            cell.update_day(day, rows, selected, current, day == actual_today)
         current_tasks = [task for task in tasks if task["day"].startswith(self.month.strftime("%Y-%m"))]
         self.month_count.configure(text=tr('本月 {0} 件事', len(current_tasks)))
 
+    def open_calendar_day(self, day, tab, attachment_id=None):
+        if self.select_day(day):
+            self.switch_tab(tab)
+            if attachment_id:
+                self.features.file_list.reveal(attachment_id)
+
     def select_day(self, day):
         if not self.save_note():
-            return
+            return False
         self.selected = day
         self.month = day.replace(day=1)
         self.load_note()
         self.refresh()
+        return True
 
     def refresh(self):
         self.render_calendar()
         self.day_heading.configure(text=day_title(self.selected))
         prefix = tr('今天 · ') if self.selected == today() else ""
         self.day_description.configure(text=prefix + tr(WEEK[self.selected.weekday()]) + f"  /  {self.selected.year}")
+        holiday = holiday_info(self.selected)
+        if holiday:
+            self.day_description.configure(text=prefix + holiday['description'], wraplength=290, justify='left')
         self.render_tasks()
         self.features.render_files()
         total, overdue = self.store.db.execute("SELECT count(*),coalesce(sum(day<?),0) FROM planner_tasks WHERE done=0", (today().isoformat(),)).fetchone()
@@ -427,17 +445,24 @@ class PlannerApp(tk.Tk):
             messagebox.showerror(tr('未能更新'), str(error), parent=self)
             self.refresh()
 
+    def quick_enter(self, event):
+        if ime_composing(event.widget):
+            return None
+        self.quick_add()
+        return "break"
+
     def quick_add(self):
         if not self.quick_var.get().strip():
             self.quick.focus_set()
             self.notice(tr('先写下想做的事情'))
             return
         try:
-            self.store.save_task({"day": self.selected.isoformat(), "title": self.quick_var.get()})
+            self.store.save_task({"day": self.selected.isoformat(), "title": self.quick_var.get(), "at_time": self.quick_time_var.get()})
         except Exception as error:
             messagebox.showerror(tr('还没有保存'), str(error), parent=self)
             return
         self.quick_var.set("")
+        self.quick_time.reset()
         self.refresh()
         self.quick.focus_set()
         self.notice(tr('待办已保存在本机'))
@@ -652,6 +677,23 @@ class PlannerApp(tk.Tk):
             handle.write("".join(traceback.format_exception(kind, value, tb)))
         messagebox.showerror(tr('操作没有完成'), str(value) + tr('\n\n当前输入仍会保留，请重试。'), parent=self)
 
+    def can_switch_profile(self, source_window):
+        if self.features.busy_count or self.features.ai:
+            messagebox.showinfo(tr('账号与同步'), tr('请等待当前操作完成后再切换账号。'), parent=source_window)
+            return False
+        about = getattr(self.features, 'about_window', None)
+        for child in self.winfo_children():
+            if isinstance(child, tk.Toplevel) and child not in (source_window, about) and child.state() != 'withdrawn':
+                messagebox.showinfo(tr('账号与同步'), tr('请先关闭其他编辑窗口，再切换账号。'), parent=source_window)
+                return False
+        return self.save_note()
+
+    def switch_profile(self, destination, source_window):
+        if not self.can_switch_profile(source_window):
+            return
+        self.next_profile = Path(destination).resolve()
+        self.close()
+
     def close(self):
         if self.features.busy_count:
             self.notice(tr('文件处理尚未结束，请稍候再关闭。'))
@@ -660,6 +702,8 @@ class PlannerApp(tk.Tk):
             return
         if self.clock_job:
             self.after_cancel(self.clock_job)
+        if self.notice_job:
+            self.after_cancel(self.notice_job)
         self.features.close()
         self.store.close()
         self.destroy()
@@ -689,8 +733,17 @@ def main():
             api.CloseHandle(mutex)
             return
     try:
-        app = PlannerApp(args.data_dir, args.language)
-        app.mainloop()
+        from github_accounts import Accounts
+        accounts = Accounts(args.data_dir)
+        profile = accounts.current()
+        while True:
+            app = PlannerApp(profile, args.language, args.data_dir)
+            app.mainloop()
+            if app.next_profile is None:
+                break
+            profile = app.next_profile
+            accounts = Accounts(args.data_dir)
+            accounts.activate(profile)
     finally:
         if mutex is not None:
             api.CloseHandle(mutex)

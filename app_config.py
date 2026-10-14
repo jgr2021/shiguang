@@ -13,7 +13,7 @@ from urllib.parse import urlsplit, urlunsplit
 from diary import atomic_write, require
 from ai_catalog import PRESETS
 
-VERSION = "1.8.0"
+VERSION = "1.9.0"
 
 
 def program_dir():
