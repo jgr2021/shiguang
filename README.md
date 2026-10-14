@@ -6,11 +6,11 @@
 
 记下要做的事、突然的想法和每天的小小进展。没有网络，也能继续记录。
 
-[**⬇ 下载 Windows 安装版 · v1.9.1 预览版**](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-Setup-1.9.1-x64.exe)
+[**⬇ 下载 Windows 安装版 · v1.9.2 预览版**](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-Setup-1.9.2-x64.exe)
 
-[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-1.9.1-Windows-x64.zip)
+[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-1.9.2-Windows-x64.zip)
 
-**Mac 下载：** [Apple Silicon（M 系列）](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-1.9.1-macOS-arm64.dmg) · [Intel](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-1.9.1-macOS-x86_64.dmg) · [Mac 安装说明](MACOS-START.md)
+**Mac 下载：** [Apple Silicon（M 系列）](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-1.9.2-macOS-arm64.dmg) · [Intel](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-1.9.2-macOS-x86_64.dmg) · [Mac 安装说明](MACOS-START.md)
 
 Windows 10/11 x64 · macOS 15+ · 无需注册 · AI 可选
 
@@ -65,7 +65,7 @@ Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，
 
 以上为虚构示例数据，不包含个人档案。
 
-[查看 v1.9.1 更新说明](docs/RELEASE-v1.9.1.md)
+[查看 v1.9.2 更新说明](docs/RELEASE-v1.9.2.md)
 
 </details>
 
@@ -85,19 +85,25 @@ Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，
 
 [连接 AI 的详细步骤](AI连接指南.md) · [想先试免费额度](docs/FREE-AI.md)
 
+## 可选：让记录跟着账号走
+
+在设置中用 GitHub 登录，将记录同步到自己创建的私有仓库。附件单个最多 **50 MiB**，当前附件合计最多 **500 MiB**；Git 历史另计。已有同步设备请一起升级到 **1.9.2**。不需要同步时，继续完全离线使用。
+
+[GitHub 同步设置](GitHub同步说明.md)
+
 ## 下载前，你可能想知道
 
 **不联网能用吗？** 能。日历、待办、日记、附件和本机搜索都能离线使用；AI 问答需要联网。
 
-**要注册账号吗？** 不需要。下载安装包和本机记录均无需 GitHub 登录。设置中的 GitHub 私有仓库同步是可选预览功能，目前仍待维护者完成应用注册和实际验证。
+**要注册账号吗？** 不需要。下载安装包和本机记录均无需 GitHub 登录。设置中的 GitHub 私有仓库同步是可选预览功能，已内置公开应用配置，用户授权自己的私有仓库即可；Mac 与双设备同步仍待验证。
 
 **日记会自动发给 AI 吗？** 不会因为写日记就自动发送。你使用助手提问时，问题、近期对话和相关档案内容会发送给你选择的服务商。
 
 **会到点提醒、自动同步手机吗？** 当前没有到点弹窗提醒或手机版。GitHub 同步仍在预览阶段，尚未完成真实双设备验证；可继续在设置中导出备份。
 
-**现在是什么版本？** v1.9.1 预览版。Windows 安装包尚未签名；Mac 包没有 Apple Developer ID 签名或公证。本次已构建程序与分发包，未运行新版本自动化测试或完整界面验收；GitHub 登录与同步尚未接通实际账号。
+**现在是什么版本？** v1.9.2 预览版。Windows 安装包尚未签名；Mac 包没有 Apple Developer ID 签名或公证。本次已构建程序与分发包，未运行新版本自动化测试或完整界面验收；已核对单台 Windows 的文字记录与私有仓库一致，容量边界与双设备同步仍待验证。
 
-[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.9.1) · [本版完成范围与待验证事项](docs/QA-v1.9.1.md)
+[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.9.2) · [本版完成范围与待验证事项](docs/QA-v1.9.2.md)
 
 ## 一起把它做得更顺手
 

@@ -1,7 +1,7 @@
 # 从源码运行与构建
 
 源码面向 Windows 10/11 x64 和 macOS 15+（Apple Silicon / Intel）。需要带 Tk 的 Python。
-v1.9.1 发布流程使用 Python 3.12.10 与 PyInstaller 6.22.3，在各平台原生构建。`.github/workflows/release.yml` 在推送版本标签或手动触发时构建全部平台，全部成功才公开预览版；该流程不运行应用功能测试。
+v1.9.2 发布流程使用 Python 3.12.10 与 PyInstaller 6.22.3，在各平台原生构建。`.github/workflows/release.yml` 在推送版本标签或手动触发时构建全部平台，全部成功才公开预览版；该流程不运行应用功能测试。
 
 统一构建命令为 `python packaging/build_release.py`，先安装 `requirements-build.txt`。Mac 必须在 Mac 上构建，并以实际架构生成包；使用 `ditto` 保留 App 内的链接和权限，提供 App ZIP 与可拖入 Applications 的 DMG。Mac 包使用 ad-hoc 签名，没有 Developer ID 或公证。Windows 还需要 Inno Setup 6，语言文件已收录在 `packaging/languages/`。
 
