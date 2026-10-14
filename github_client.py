@@ -10,6 +10,7 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 from diary import require
 from localization import tr
+from github_limits import FILE_LIMIT, JSON_RESPONSE_LIMIT, BLOB_RESPONSE_LIMIT, BLOB_TIMEOUT_SECONDS
 
 
 class GitHubError(ValueError):
@@ -29,7 +30,8 @@ class GitHub:
         self.token = token
         self.opener = build_opener(NoRedirect())
 
-    def request(self, method, path, data=None, login=False):
+    def request(self, method, path, data=None, login=False, *,
+                response_limit=JSON_RESPONSE_LIMIT, timeout=20):
         require(path.startswith("/") and not path.startswith("//"), "Invalid GitHub API path")
         host = "https://github.com" if login else "https://api.github.com"
         headers = {"Accept": "application/json" if login else "application/vnd.github+json",
@@ -40,9 +42,9 @@ class GitHub:
                 headers["Authorization"] = "Bearer " + self.token
         payload = json.dumps(data).encode() if data is not None else None
         try:
-            with self.opener.open(Request(host + path, payload, headers, method=method), timeout=20) as response:
-                raw = response.read(24 * 1024 * 1024 + 1)
-                require(len(raw) <= 24 * 1024 * 1024, tr('同步数据过大，请减少附件或记录后重试。'))
+            with self.opener.open(Request(host + path, payload, headers, method=method), timeout=timeout) as response:
+                raw = response.read(response_limit + 1)
+                require(len(raw) <= response_limit, tr('同步数据过大，请减少附件或记录后重试。'))
                 return json.loads(raw) if raw else {}
         except HTTPError as error:
             # Do not include the server response, URL or tokens in logs/UI.
@@ -106,13 +108,18 @@ class GitHub:
 
     def blob(self, repo, sha):
         require(re.fullmatch(r"[0-9a-f]{40}", sha or ""), "Invalid Git blob")
-        value = self.request("GET", "/repos/" + repo + "/git/blobs/" + sha)
+        value = self.request("GET", "/repos/" + repo + "/git/blobs/" + sha,
+                             response_limit=BLOB_RESPONSE_LIMIT, timeout=BLOB_TIMEOUT_SECONDS)
         require(value.get("encoding") == "base64", "Unsupported Git blob encoding")
-        return base64.b64decode(value["content"], validate=False)
+        content = base64.b64decode(value["content"], validate=False)
+        require(len(content) <= FILE_LIMIT, tr('同步数据过大，请减少附件或记录后重试。'))
+        return content
 
     def put_blob(self, repo, content):
+        require(len(content) <= FILE_LIMIT, tr('同步数据过大，请减少附件或记录后重试。'))
         value = self.request("POST", "/repos/" + repo + "/git/blobs", {
-            "encoding": "base64", "content": base64.b64encode(content).decode("ascii")})
+            "encoding": "base64", "content": base64.b64encode(content).decode("ascii")},
+            timeout=BLOB_TIMEOUT_SECONDS)
         return value["sha"]
 
     def read_head(self, binding):

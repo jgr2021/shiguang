@@ -57,7 +57,7 @@ class SyncController:
             self.next_at = time.monotonic() + 120
             value = tr('已同步 {0} 条记录 · {1}', result["records"], result["at"])
             if result["skipped"]:
-                value += "\n" + tr('{0} 个超过10 MiB的附件仅保存在本机。', result["skipped"])
+                value += "\n" + tr('{0} 个超过50 MiB的附件仅保存在本机。', result["skipped"])
             self.status.set(value)
             if not self.app.note_dirty:
                 self.app.load_note()
@@ -172,7 +172,7 @@ class SyncWindow:
             self.button(card, '立即同步', self.controller.start, True)
             self.button(card, '处理同步冲突', self.conflicts)
         card = self.card('同步范围')
-        self.text(card, tr('同步日记、待办、正式档案与小附件的日期关联。每个附件不超过10 MiB，总计100 MiB。助手聊天、AI Token 和本机配置不参与同步。'))
+        self.text(card, tr('同步日记、待办、正式档案与小附件的日期关联。每个附件不超过50 MiB，总计500 MiB。助手聊天、AI Token 和本机配置不参与同步。'))
         self.text(card, tr('私有仓库不是端到端加密空间；删除记录后，Git 历史中仍可能保留旧内容。'))
         self.button(card, '查看同步使用说明', lambda: open_path(str(program_dir() / 'GitHub同步说明.md')))
 

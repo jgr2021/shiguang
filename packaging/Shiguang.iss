@@ -4,7 +4,7 @@
 #ifndef ReleaseDir
   #error ReleaseDir is required
 #endif
-#define AppVersion "1.9.1"
+#define AppVersion "1.9.2"
 
 [Setup]
 AppId={{5991DB7F-A2D3-44AD-A696-06E54B69EAF4}
@@ -20,7 +20,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 OutputDir={#ReleaseDir}
-OutputBaseFilename=Shiguang-Setup-1.9.1-x64
+OutputBaseFilename=Shiguang-Setup-1.9.2-x64
 SetupIconFile={#AppSource}\shiguang.ico
 UninstallDisplayIcon={app}\Shiguang.exe
 UninstallDisplayName={cm:AppTitle}
@@ -31,7 +31,7 @@ CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
 InfoBeforeFile={#AppSource}\开始使用.txt
-VersionInfoVersion=1.9.1.0
+VersionInfoVersion=1.9.2.0
 VersionInfoDescription=拾光日历安装程序
 VersionInfoProductName=拾光日历
 ShowLanguageDialog=yes

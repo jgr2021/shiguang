@@ -10,7 +10,7 @@
 4. 数据在 `~/Library/Application Support/Shiguang/data`。设置中可打开目录、导出完整备份。更新时退出应用，再替换应用程序中的 App；不会把日记写入 App 包。
 5. AI 密钥和 GitHub 令牌存入系统钥匙串，备份不包含密钥。迁移到另一台电脑后重新填写或登录。首次访问时 macOS 可能要求你允许钥匙串访问。
 
-GitHub 同步仍待维护者完成应用注册与真实双设备验证；可直接跳过。Codex 是可选功能，需自行安装并登录 Codex CLI；在 AI 设置中选择实际的 `codex` 命令行程序。
+GitHub 同步为可选功能，已内置公开应用配置；Mac 与双设备同步仍待实际验证，可直接跳过。Codex 是可选功能，需自行安装并登录 Codex CLI；在 AI 设置中选择实际的 `codex` 命令行程序。
 
 此预览版采用本地代码签名，**没有 Apple Developer ID 签名或公证**。首次打开可能被 Gatekeeper 阻止；请核对下载来源和 SHA256SUMS。关于单个应用的系统提示，见 [Apple 官方说明](https://support.apple.com/102445)。不要关闭整个系统的安全检查。
 
@@ -30,4 +30,4 @@ Requires macOS 15 or later. Choose arm64 for Apple Silicon or x86_64 for Intel. 
 
 Data lives in `~/Library/Application Support/Shiguang/data`; API keys and GitHub tokens use macOS Keychain and are excluded from backups. Quit the app before replacing it during upgrades. Use Settings to export a backup. Enter saves a task or sends chat; Ctrl+Enter / Command+Enter inserts a new line.
 
-This preview has an ad-hoc signature, not an Apple Developer ID signature or notarization. Follow [Apple's official explanation](https://support.apple.com/102445) for any per-app Gatekeeper prompt. Real desktop interaction, Keychain, Codex requests and GitHub synchronization have not yet been validated. GitHub sync also awaits application registration.
+This preview has an ad-hoc signature, not an Apple Developer ID signature or notarization. Follow [Apple's official explanation](https://support.apple.com/102445) for any per-app Gatekeeper prompt. Real desktop interaction, Keychain, Codex requests and GitHub synchronization have not yet been validated. Public GitHub App configuration is included; sign-in and synchronization remain optional.

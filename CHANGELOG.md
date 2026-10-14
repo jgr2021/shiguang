@@ -1,5 +1,12 @@
 # 版本记录
 
+## 1.9.2 · Preview（扩大附件同步）
+
+- GitHub 同步单附件上限由10 MiB提高到50 MiB，当前附件总量由100 MiB提高到500 MiB。
+- 附件传输使用更大的有界响应读取和180秒网络等待，避免大文件仍被原20秒超时或24 MiB响应上限阻断。
+- Windows、Mac 包内置公开 GitHub App Client ID 和名称；不包含登录令牌、私钥或个人记录。
+- 需要所有同步设备一起升级；Git 历史占用不计入当前附件总量。
+
 ## 1.9.1 · Preview（新增 macOS 原生包）
 
 - 增加 Apple Silicon 和 Intel 的 macOS 15+ App、DMG 与 ZIP 构建。

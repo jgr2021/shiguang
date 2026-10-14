@@ -7,9 +7,8 @@ from urllib.parse import urlparse
 
 from diary import date_field, digest, encode, now, require
 from localization import tr
+from github_limits import FILE_LIMIT, MANIFEST_LIMIT
 
-FILE_LIMIT = 10 * 1024 * 1024
-MANIFEST_LIMIT = 16 * 1024 * 1024
 FIELDS = {
     "task": ("planner_tasks", "id", "id day title at_time priority notes done created_at updated_at".split()),
     "note": ("planner_notes", "day", "day body updated_at".split()),

@@ -1,6 +1,6 @@
 # GitHub 私有仓库同步
 
-适用：拾光 1.9.0 预览版。代码已接入；真实登录和双设备同步尚待完成 GitHub App 注册后验证。不要把安装或构建成功视为云端已经接通。
+适用：拾光 1.9.2 预览版。发行包已内置公开的 GitHub App 注册信息，普通使用者直接登录即可。已核对单台 Windows 的文字记录与私有仓库一致；Mac 实际操作与双设备同步仍待验证。
 
 ## 普通使用者
 
@@ -18,7 +18,9 @@
 ## 同步内容与限制
 
 - 每日日记、待办、正式日记及分析修订、复盘和外部动态。
-- 附件及日期关联：每个最多 **10 MiB**，当前所有同步附件总计最多 **100 MiB**、最多1000个。超过单文件限制的附件仅保留本机，并在完成提示中计数；超过总量限制时停止此次同步。
+- 附件及日期关联：每个最多 **50 MiB**，当前所有同步附件总计最多 **500 MiB**、最多1000个。超过单文件限制的附件仅保留本机，并在完成提示中计数；超过总量限制时停止此次同步。
+- 从旧版升级时，所有同步设备都应升级到 1.9.2 或更新版本；旧版会拒绝读取超过原上限的附件并停止同步，本机数据保留。
+- 500 MiB 是当前附件总量上限，不包含 Git 历史占用。更新或删除文件后，历史版本仍可能占用仓库空间。
 - 记录清单最多16 MiB；这是轻量同步的实现上限，不代表 GitHub 的存储配额。
 - AI Token、Codex 登录、GitHub Token、助手对话、未确认日程草案、Agent 协议和自动任务配置均不上传。未作为附件导入的 `generated/` 文件也不自动扫描。
 - 单个资料空间固定绑定一个 GitHub 用户 ID 和仓库 ID；不能直接更换到其他仓库，以防同步历史串用。
@@ -37,7 +39,8 @@
 3. 关闭 Webhook 的 **Active**。
 4. Repository permissions：**Contents → Read and write**，Metadata 保持所需只读。其他权限均不添加，不请求 Issues、Actions、Workflows、Administration 等权限。
 5. 安装范围选择 **Any account**。注册后记录公开的 **Client ID** 和应用 URL 最后一段 **slug**。
-6. 将这两项填入拾光「账号与同步」中的维护者配置，或在程序旁放 `github-app.json`：
+6. 按 GitHub 页面提示在 Credentials → Key pairs 生成私钥，保存在维护者自己的安全位置。安装前可能需要此步骤；设备登录不使用这份私钥，不要将其放进仓库或发行包。
+7. 将这两项填入拾光「账号与同步」中的维护者配置，或在程序旁放 `github-app.json`：
 
 ```json
 {
@@ -62,4 +65,5 @@
 
 - [GitHub App 设备授权、令牌及权限范围](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app)
 - [注册 GitHub App](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app)
+- [GitHub 文件与仓库大小限制](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)
 - [非强制更新分支引用](https://docs.github.com/en/rest/git/refs#update-a-reference)

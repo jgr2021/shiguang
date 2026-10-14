@@ -1,4 +1,4 @@
-Shiguang 1.9.1 · Preview
+Shiguang 1.9.2 · Preview
 A little progress, every day.
 
 Pick dates from a calendar and times from hour/minute buttons. All-day events and one-minute adjustments are supported.
@@ -75,7 +75,7 @@ Before restoring a backup, close the app and preserve a copy of the current data
 Share the installer or clean program ZIP with friends, rather than your data folder.
 
 PREVIEW SCOPE
-Automatic updates, tray reminders and built-in web search are not included. Optional GitHub sync still awaits app registration and live verification.
+Automatic updates, tray reminders and built-in web search are not included. Optional GitHub sync includes public app configuration. Limits: 50 MiB per attachment and 500 MiB total current attachments. Upgrade all syncing devices; Mac and two-device synchronization still await validation.
 The original owner’s Codex chat and scheduled task are not part of the distributed app.
 Archiving does not launch another person’s Codex task. Ask the assistant directly to review your records.
 

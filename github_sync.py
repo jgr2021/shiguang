@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from diary import encode, now, require
 from github_accounts import binding, token_for
 from github_client import GitHub
+from github_limits import TOTAL_LIMIT, FILE_COUNT_LIMIT
 from github_records import (MANIFEST_LIMIT, initialize, snapshot, validate, merge,
                             apply_records, asset_path, checked_bytes)
 from localization import tr
@@ -65,8 +66,8 @@ def sync(store, progress=lambda message: None):
         staged_db.close()
 
     assets = [v for k, v in merged.items() if k.startswith("file/") and v is not None]
-    require(sum(v["size"] for v in assets) <= 100 * 1024 * 1024 and len(assets) <= 1000,
-            tr('轻量同步暂支持总计100 MiB、最多1000个小附件。'))
+    require(sum(v["size"] for v in assets) <= TOTAL_LIMIT and len(assets) <= FILE_COUNT_LIMIT,
+            tr('轻量同步暂支持总计500 MiB、最多1000个附件。'))
     changes, needed = [], set()
     for index, item in enumerate(assets):
         progress(tr('正在同步附件 {0}/{1}…', index + 1, len(assets)))

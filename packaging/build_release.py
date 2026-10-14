@@ -67,6 +67,10 @@ def main():
         run(*args, ROOT/'desktop_app.py')
         bundle = ROOT/'dist/Shiguang.app'
         resources = bundle/'Contents/Resources'
+        registration = json.loads((ROOT/'github-app.json').read_text(encoding='utf-8-sig'))
+        if set(registration) != {'client_id', 'slug'} or not all(isinstance(x, str) for x in registration.values()):
+            raise SystemExit('github-app.json must contain only public app registration.')
+        (resources/'github-app.json').write_text(json.dumps(registration, indent=2), encoding='utf-8')
         licenses(resources/'licenses')
         info_path = bundle/'Contents/Info.plist'
         info = plistlib.loads(info_path.read_bytes())
