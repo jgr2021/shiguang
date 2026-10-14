@@ -6,11 +6,13 @@
 
 记下要做的事、突然的想法和每天的小小进展。没有网络，也能继续记录。
 
-[**⬇ 下载 Windows 安装版 · v1.9 预览版**](https://github.com/jgr2021/shiguang/releases/download/v1.9.0/Shiguang-Setup-1.9.0-x64.exe)
+[**⬇ 下载 Windows 安装版 · v1.9.1 预览版**](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-Setup-1.9.1-x64.exe)
 
-[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.0/Shiguang-1.9.0-Windows-x64.zip)
+[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-1.9.1-Windows-x64.zip)
 
-Windows 10 / 11 · 64位 · 无需注册 · AI 可选
+**Mac 下载：** [Apple Silicon（M 系列）](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-1.9.1-macOS-arm64.dmg) · [Intel](https://github.com/jgr2021/shiguang/releases/download/v1.9.1/Shiguang-1.9.1-macOS-x86_64.dmg) · [Mac 安装说明](MACOS-START.md)
+
+Windows 10/11 x64 · macOS 15+ · 无需注册 · AI 可选
 
 简体中文 · [繁體中文](docs/README.zh-TW.md) · [English](docs/README.en.md)
 
@@ -32,6 +34,8 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 不用每天写得很完整。从今天的一件小事开始，就够了。
 
 ## 第一次用，做这三步
+
+Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，之后从应用程序打开。
 
 1. **下载安装。** 点上方“下载 Windows 安装版”，完成安装后打开“拾光日历”。不用下载源码，也不用安装 Python。
 2. **记下一件事。** 欢迎页选“先开始记录”，点“回到今天”，在待办输入框写下“晚上散步”，按 Enter 添加。
@@ -61,7 +65,7 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
 以上为虚构示例数据，不包含个人档案。
 
-[查看 v1.9 更新说明](docs/RELEASE-v1.9.0.md)
+[查看 v1.9.1 更新说明](docs/RELEASE-v1.9.1.md)
 
 </details>
 
@@ -91,9 +95,9 @@ Windows 10 / 11 · 64位 · 无需注册 · AI 可选
 
 **会到点提醒、自动同步手机吗？** 当前没有到点弹窗提醒或手机版。GitHub 同步仍在预览阶段，尚未完成真实双设备验证；可继续在设置中导出备份。
 
-**现在是什么版本？** v1.9 预览版，安装包尚未签名。本次已构建程序与分发包，未运行新版本自动化测试或完整界面验收；GitHub 登录与同步尚未接通实际账号。
+**现在是什么版本？** v1.9.1 预览版。Windows 安装包尚未签名；Mac 包没有 Apple Developer ID 签名或公证。本次已构建程序与分发包，未运行新版本自动化测试或完整界面验收；GitHub 登录与同步尚未接通实际账号。
 
-[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.9.0) · [本版完成范围与待验证事项](docs/QA-v1.9.0.md)
+[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.9.1) · [本版完成范围与待验证事项](docs/QA-v1.9.1.md)
 
 ## 一起把它做得更顺手
 

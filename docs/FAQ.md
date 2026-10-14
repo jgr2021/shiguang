@@ -10,13 +10,17 @@
 
 当前程序可直接下载安装，基础记录不需要注册或购买 AI 服务。在线助手使用你自己的服务商账户，额度、收费及条款由该服务商决定。软件没有共享免费密钥。[免费额度筛选](FREE-AI.md)。
 
+## Mac 下载哪个？
+
+M 系列选 arm64 DMG，Intel 选 x86_64 DMG；当前要求 macOS 15 或更新版本。打开 DMG，把 App 拖入应用程序。Mac 包尚未经过 Apple Developer ID 签署或公证，完整说明见 [Mac 安装说明](../MACOS-START.md)。
+
 ## 断网会丢记录吗？
 
 日历、待办、日记、附件与本机搜索不依赖网络。日记草稿自动保存；出现保存失败提示时，先复制未保存文字，检查磁盘空间。AI 问答需要网络。
 
 ## 日记存在哪里？会发出去吗？
 
-新安装默认放在当前 Windows 用户的 `%LOCALAPPDATA%\Shiguang\data`，可以从设置打开数据目录。记录日记本身不会自动调用在线 AI。
+Mac 新安装默认放在 `~/Library/Application Support/Shiguang/data`，密钥使用系统钥匙串。Windows 新安装默认放在当前用户的 `%LOCALAPPDATA%\Shiguang\data`，可以从设置打开数据目录。记录日记本身不会自动调用在线 AI。
 
 主动使用拾光助手时，问题、近期对话和完成请求所需的相关档案会发送给你选定的服务商。API Key 在 Windows 上加密保存，普通备份不包含它；换电脑需要重新填写。
 
@@ -58,11 +62,11 @@
 
 ## 下载的几个 ZIP 有什么区别？
 
-`Shiguang-1.9.0-Windows-x64.zip` 是程序，完整解压后打开 `Shiguang.exe`。GitHub 的 `Source code (zip)` 和 `Code → Download ZIP` 是源代码，普通使用者无需下载。
+`Shiguang-1.9.1-Windows-x64.zip` 是程序，完整解压后打开 `Shiguang.exe`。GitHub 的 `Source code (zip)` 和 `Code → Download ZIP` 是源代码，普通使用者无需下载。
 
 ## 这版还有哪些限制？
 
-目前是未签名预览版，尚未完成全新电脑安装/卸载及所有输入法、显示器组合验证。没有内置网页搜索、扫描件 OCR 和自动更新。Codex、GitHub、ChatGPT、WorkBuddy 的其他工作记录尚未自动同步。[本版完成范围](QA-v1.9.0.md)。
+目前是未签名预览版，尚未完成全新电脑安装/卸载及所有输入法、显示器组合验证。没有内置网页搜索、扫描件 OCR 和自动更新。Codex、GitHub、ChatGPT、WorkBuddy 的其他工作记录尚未自动同步。[本版完成范围](QA-v1.9.1.md)。
 
 ## 怎样反馈？
 
