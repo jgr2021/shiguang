@@ -89,7 +89,7 @@ Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，
 
 在设置中用 GitHub 登录，将记录同步到自己创建的私有仓库。附件单个最多 **50 MiB**，当前附件合计最多 **500 MiB**；Git 历史另计。已有同步设备请一起升级到 **1.9.2**。不需要同步时，继续完全离线使用。
 
-[GitHub 同步设置](GitHub同步说明.md)
+[普通用户：同步上手与常见问题](docs/SYNC-QUICKSTART.md) · [同步范围与详细说明](GitHub同步说明.md)
 
 ## 下载前，你可能想知道
 

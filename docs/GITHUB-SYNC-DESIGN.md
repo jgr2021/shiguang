@@ -59,7 +59,7 @@
 - 桌面端可使用 GitHub 官方 Device Flow，发布包只包含公开的 Client ID 和 App 名称，不包含开发者私钥或 Client Secret。
 - 仓库权限最小化为指定仓库的内容读写与必要元数据读取；避免使用拥有全部私有仓库访问能力的传统 OAuth `repo` scope。
 - 每次绑定和同步都核对仓库 ID、所属用户 ID、私有属性及数据格式标识。拒绝公共仓库和产品源码仓库作为日记同步目标。
-- GitHub App 用户令牌通常有有效期。必须实现过期后的重新授权；若产品需要无感续期，应配置安全的服务端令牌代理，不能把 Client Secret 打包到桌面端。
+- GitHub App 用户令牌通常有有效期。1.9.2仅实现过期后的重新授权；后续可用Device Flow返回的refresh token实现续期，按当前GitHub文档，此流程续期不要求client_secret。应安全保存并轮换refresh token，不把开发者Client Secret打包到桌面端。其他需要应用密钥的授权流程应由安全服务端办理。[官方续期说明](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens)（2026-10-14核对）。
 - Git 仓库中的旧提交可能继续保留已删除记录。普通同步删除不等于清除历史；启用前要在产品隐私说明中讲清楚。仓库私有也不等于端到端加密。
 - 大附件更适合文件存储服务。GitHub 普通仓库阻止超过 100 MiB 的文件，官方也不建议把 Git 当作通用备份工具；产品需有明确的小附件策略与容量提示。
 

@@ -1,5 +1,7 @@
 # GitHub 私有仓库同步
 
+**第一次使用？先看 [普通用户同步上手与排错](https://github.com/jgr2021/shiguang/blob/main/docs/SYNC-QUICKSTART.md)。** 普通用户不用注册GitHub App、填写Client ID或生成私钥；下方“维护者”章节只供软件维护者配置自己的发行版。
+
 适用：拾光 1.9.2 预览版。发行包已内置公开的 GitHub App 注册信息，普通使用者直接登录即可。已核对单台 Windows 的文字记录与私有仓库一致；Mac 实际操作与双设备同步仍待验证。
 
 ## 普通使用者
@@ -13,7 +15,7 @@
 5. 点击「关联并启用同步」，核对弹出的目标账号、私有仓库和资料目录。启用后可「立即同步」，也可在应用运行时自动同步。
 6. 在另一台电脑用同一个 GitHub 账号登录，并选择同一个仓库。不要选产品源码仓库。
 
-登录过期时重新授权即可。本版使用 GitHub App 用户令牌，默认有效期约8小时；没有在桌面端保存开发者密钥，因此不实现需要该密钥的后台续期。过期、断网或权限被撤回都不影响本机记录。
+登录过期时重新授权同一账号、选择并关联原仓库即可。本版使用 GitHub App 用户令牌，默认有效期约8小时；当前尚未实现自动续期。GitHub设备授权流程允许不提供开发者密钥进行令牌续期，这属于后续实现能力，不能把当前未实现描述成GitHub不支持。过期、断网或权限被撤回都不影响本机记录。[GitHub官方说明](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens)
 
 ## 同步内容与限制
 
