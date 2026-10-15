@@ -48,7 +48,7 @@ Mac 新安装默认放在 `~/Library/Application Support/Shiguang/data`，密钥
 
 首次设置、找不到仓库、网络超时、登录过期、附件超限等问题，请看 [同步上手与排错](SYNC-QUICKSTART.md)。
 
-设计上只允许关联自己拥有的私有仓库，首次加入本机记录需要明确选择。发行包已内置公开应用注册信息，已核对单台 Windows 文字记录与云端一致。单附件50 MiB、当前附件合计500 MiB；Git 历史另计，所有同步设备需一起升级至1.9.2或更新版本。仓库内容未做端到端加密，Git 历史也可能保留删除前的内容；请先阅读 [同步说明](../GitHub同步说明.md)。不启用同步时，继续完全本机使用。
+设计上只允许关联自己拥有的私有仓库，首次加入本机记录需要明确选择。发行包已内置公开应用注册信息，已核对单台 Windows 文字记录与云端一致。单附件50 MiB、当前附件合计500 MiB；Git 历史另计，所有同步设备需使用1.9.2或更新版本。仓库内容未做端到端加密，Git 历史也可能保留删除前的内容；请先阅读 [同步说明](../GitHub同步说明.md)。不启用同步时，继续完全本机使用。
 
 ## AI 会擅自改我的安排吗？
 
@@ -64,11 +64,11 @@ Mac 新安装默认放在 `~/Library/Application Support/Shiguang/data`，密钥
 
 ## 下载的几个 ZIP 有什么区别？
 
-`Shiguang-1.9.2-Windows-x64.zip` 是程序，完整解压后打开 `Shiguang.exe`。GitHub 的 `Source code (zip)` 和 `Code → Download ZIP` 是源代码，普通使用者无需下载。
+`Shiguang-1.9.3-Windows-x64.zip` 是程序，完整解压后打开 `Shiguang.exe`。GitHub 的 `Source code (zip)` 和 `Code → Download ZIP` 是源代码，普通使用者无需下载。
 
 ## 这版还有哪些限制？
 
-目前是未签名预览版，尚未完成全新电脑安装/卸载及所有输入法、显示器组合验证。没有内置网页搜索、扫描件 OCR 和自动更新。Codex、GitHub、ChatGPT、WorkBuddy 的其他工作记录尚未自动同步。[本版完成范围](QA-v1.9.2.md)。
+目前是未签名预览版，尚未完成全新电脑安装/卸载及所有输入法、显示器组合验证。没有内置网页搜索、扫描件 OCR 和自动更新。Codex、GitHub、ChatGPT、WorkBuddy 的其他工作记录尚未自动同步。[本版完成范围](QA-v1.9.3.md)。
 
 ## 怎样反馈？
 

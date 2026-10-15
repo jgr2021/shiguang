@@ -8,10 +8,10 @@
 
 | 你想怎样使用 | 下载哪个 |
 | --- | --- |
-| 像普通软件一样安装，有桌面入口 | **[Windows 安装版（推荐）](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-Setup-1.9.2-x64.exe)** |
-| 解压到文件夹后运行 | [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-1.9.2-Windows-x64.zip) |
+| 像普通软件一样安装，有桌面入口 | **[Windows 安装版（推荐）](https://github.com/jgr2021/shiguang/releases/download/v1.9.3/Shiguang-Setup-1.9.3-x64.exe)** |
+| 解压到文件夹后运行 | [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.3/Shiguang-1.9.3-Windows-x64.zip) |
 
-Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-1.9.2-macOS-arm64.dmg) 或 [Intel DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.2/Shiguang-1.9.2-macOS-x86_64.dmg)，适用于 macOS 15+。打开 DMG，将 App 拖入 Applications；详见 [Mac 安装说明](../MACOS-START.md)。目前没有手机版。
+Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.3/Shiguang-1.9.3-macOS-arm64.dmg) 或 [Intel DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.3/Shiguang-1.9.3-macOS-x86_64.dmg)，适用于 macOS 15+。打开 DMG，将 App 拖入 Applications；详见 [Mac 安装说明](../MACOS-START.md)。目前没有手机版。
 
 - **安装版：** 下载 `.exe` 文件，按安装向导完成，然后打开桌面的“拾光日历”。
 - **ZIP：** 先完整解压，再双击 `Shiguang.exe`。把旁边的 `_internal` 文件夹留在原处。
@@ -31,6 +31,12 @@ Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](h
 ![v1.8 月历与当天待办截图，使用虚构示例数据](media/app-calendar.png)
 
 待办保存到本机，不需要网络。日期与时间直接点选，支持全天事项。设置时间用于安排；当前版本没有到点弹窗提醒。
+
+### 修改或删除待办
+
+- 点待办右侧的 **编辑**，修改内容、日期或时间，按 Enter 保存。
+- 点 **删除** 会直接移除，不弹确认窗口。
+- 误删时点列表下方的 **撤销**，连续删除可逐条恢复。撤销入口在本次打开期间保留；退出应用或切换账号后清空。
 
 ## 3. 留下一句话
 
@@ -55,7 +61,7 @@ Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](h
 
 **第一次设置同步：看 [普通用户上手与排错](SYNC-QUICKSTART.md)。** 创建私有仓库、授权选项、是否加入本机记录和成功提示都按顺序列出；普通用户不需要处理开发者密钥。
 
-不登录 GitHub 也能一直使用本机版。v1.9.2 的「设置 → 账号与同步」是可选预览入口，已内置公开 GitHub App 配置。需要同步时登录并授权自己的私有仓库；单附件50 MiB、合计500 MiB，所有同步设备需一起升级。Mac 与双设备同步仍待验证。不需要同步时可以直接跳过。详情见 [GitHub 同步说明](../GitHub同步说明.md)。
+不登录 GitHub 也能一直使用本机版。v1.9.3 的「设置 → 账号与同步」是可选预览入口，已内置公开 GitHub App 配置。需要同步时登录并授权自己的私有仓库；单附件50 MiB、合计500 MiB，所有同步设备需一起升级。Mac 与双设备同步仍待验证。不需要同步时可以直接跳过。详情见 [GitHub 同步说明](../GitHub同步说明.md)。
 
 ## 想试试 AI？
 
