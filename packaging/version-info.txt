@@ -1,12 +1,12 @@
 VSVersionInfo(
-  ffi=FixedFileInfo(filevers=(1,9,2,0), prodvers=(1,9,2,0), mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0,0)),
+  ffi=FixedFileInfo(filevers=(1,9,3,0), prodvers=(1,9,3,0), mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0,0)),
   kids=[StringFileInfo([StringTable('080404B0', [
     StringStruct('CompanyName', '拾光'),
     StringStruct('FileDescription', '拾光日历 · 离线记录与个人 AI 助手'),
-    StringStruct('FileVersion', '1.9.2'),
+    StringStruct('FileVersion', '1.9.3'),
     StringStruct('InternalName', 'Shiguang'),
     StringStruct('OriginalFilename', 'Shiguang.exe'),
     StringStruct('ProductName', '拾光日历'),
-    StringStruct('ProductVersion', '1.9.2-preview')
+    StringStruct('ProductVersion', '1.9.3-preview')
   ])]), VarFileInfo([VarStruct('Translation', [2052,1200])])]
 )

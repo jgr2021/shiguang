@@ -1203,3 +1203,16 @@ TRADITIONAL.update({
 # macOS and cross-platform wording
 TRADITIONAL.update({'无法访问系统钥匙串，请解锁后重试。': '無法存取系統鑰匙圈，請解鎖後重試。', '无法访问系统钥匙串，密钥尚未保存。': '無法存取系統鑰匙圈，金鑰尚未儲存。', '无法访问系统钥匙串，密钥尚未删除。': '無法存取系統鑰匙圈，金鑰尚未刪除。', '拾光已经打开，请从 Dock 切回应用。': '拾光已經開啟，請從 Dock 切回應用程式。', '选择 Codex 程序': '選擇 Codex 程式', '未找到 Codex CLI。请安装 Codex，或选择命令行程序的位置。': '找不到 Codex CLI。請安裝 Codex，或選擇命令列程式的位置。', 'Token 通过系统安全存储保存。地址改变后，密钥不会自动转发到新地址。': 'Token 透過系統安全儲存保存。位址改變後，金鑰不會自動轉送到新位址。', '升级请安装新版安装包。卸载只移除程序，保留日记与加密 Token；迁移到其他账户或电脑后需重新填写 Token。': '升級請安裝新版。移除程式會保留日記與安全儲存的 Token；移至其他帳號或電腦後需重新填寫 Token。'})
 ENGLISH.update({'无法访问系统钥匙串，请解锁后重试。': 'Cannot access Keychain. Unlock it and try again.', '无法访问系统钥匙串，密钥尚未保存。': 'Cannot access Keychain. The key has not been saved.', '无法访问系统钥匙串，密钥尚未删除。': 'Cannot access Keychain. The key has not been deleted.', '拾光已经打开，请从 Dock 切回应用。': 'Shiguang is already open. Switch to it from the Dock.', '选择 Codex 程序': 'Choose Codex executable', '未找到 Codex CLI。请安装 Codex，或选择命令行程序的位置。': 'Codex CLI was not found. Install it or select the command-line executable.', 'Token 通过系统安全存储保存。地址改变后，密钥不会自动转发到新地址。': 'Keys use secure system storage. Changing the endpoint does not forward an existing key.', '升级请安装新版安装包。卸载只移除程序，保留日记与加密 Token；迁移到其他账户或电脑后需重新填写 Token。': 'Install the new version to upgrade. Removing the app keeps records and securely stored keys; enter keys again on another account or computer.'})
+
+
+# Compact task editor and session-local delete undo.
+ENGLISH.update({
+    '编辑': 'Edit', '撤销': 'Undo', '保存': 'Save',
+    '已删除：{0}': 'Deleted: {0}', '已删除 {0} 项': '{0} tasks deleted',
+    '这条待办已存在，未覆盖现有内容。': 'This task already exists. Its current contents were kept.',
+})
+TRADITIONAL.update({
+    '编辑': '編輯', '撤销': '復原', '保存': '儲存',
+    '已删除：{0}': '已刪除：{0}', '已删除 {0} 项': '已刪除 {0} 項',
+    '这条待办已存在，未覆盖现有内容。': '這則待辦已存在，未覆寫現有內容。',
+})

@@ -40,25 +40,59 @@ class ScrollFrame(ScrollPane):
     pass
 
 
+class TaskUndoBar(tk.Frame):
+    """Feedback in the task list, never a confirmation window or a timed prompt."""
+    def __init__(self, parent, app, **pack_options):
+        super().__init__(parent, bg=P['soft'], padx=10, pady=7)
+        self.app, self.pack_options = app, pack_options
+        self.undo = button(self, tr('撤销'), app.undo_task_delete, padx=8, pady=4)
+        self.undo.pack(side='right', padx=(6, 0))
+        self.caption = label(self, '', 9, P['muted'], justify='left', anchor='w')
+        self.caption.pack(side='left', fill='x', expand=True)
+        self.caption.bind('<Configure>', self.resize_caption)
+        app.task_undo_bars.append(self)
+        self.refresh()
+
+    def resize_caption(self, event):
+        width = max(90, event.width)
+        if int(self.caption.cget('wraplength')) != width:
+            self.caption.configure(wraplength=width)
+
+    def refresh(self):
+        pending = self.app.deleted_tasks
+        if not pending and not self.app.task_error:
+            self.pack_forget()
+            return
+        if pending:
+            self.undo.pack(side='right', padx=(6, 0), before=self.caption)
+            last = pending[-1]['title']
+            last = last[:24] + '…' if len(last) > 24 else last
+            text = tr('已删除：{0}', last) if len(pending) == 1 else tr('已删除 {0} 项', len(pending))
+        else:
+            self.undo.pack_forget()
+            text = ''
+        self.caption.configure(text=self.app.task_error or text,
+                               fg=P['red'] if self.app.task_error else P['muted'])
+        self.pack(**self.pack_options)
+
+
 class TaskDialog(tk.Toplevel):
     def __init__(self, app, task=None, owner=None, day=None):
         owner = owner or app
         super().__init__(owner)
         self.app, self.task = app, task
         self.saving = False
-        prepare_window(self, owner, tr('编辑待办') if task else tr('安排一件事'), (610, 500), (500, 420),
+        prepare_window(self, owner, tr('编辑待办') if task else tr('安排一件事'), (520, 340), (500, 330),
                        on_show=lambda: (self.grab_set(), title_entry.focus_set()))
-        heading(self, tr('编辑待办') if task else tr('安排一件事'), tr('给想做的事，留一个合适的位置。'), tr('日程安排'))
-        controls = tk.Frame(self, bg=P["bg"], padx=28, pady=18)
+        self.configure(bg=P['paper'])
+        controls = tk.Frame(self, bg=P["paper"], padx=22, pady=16)
         controls.pack(side="bottom", fill="x")
-        pane = ScrollPane(self, bg=P["paper"], bind_wheel=True)
-        pane.pack(fill="both", expand=True, padx=26)
-        frame = tk.Frame(pane.inner, bg=P["paper"], padx=22, pady=20)
-        frame.pack(fill="x")
-        label(frame, tr('待办内容')).pack(anchor="w")
+        frame = tk.Frame(self, bg=P["paper"], padx=22, pady=18)
+        frame.pack(fill="both", expand=True)
+        label(frame, tr('待办内容'), 9, P['muted']).pack(anchor="w")
         self.title_var = tk.StringVar(value=task["title"] if task else app.quick_var.get())
         title_entry = ttk.Entry(frame, textvariable=self.title_var, width=46, font=(FONT, 11))
-        title_entry.pack(fill="x", pady=(6, 14), ipady=5)
+        title_entry.pack(fill="x", pady=(6, 16), ipady=4)
         dates = tk.Frame(frame, bg=P["paper"])
         dates.pack(fill="x")
         self.day_var = tk.StringVar(value=task["day"] if task else (day or app.selected).isoformat())
@@ -70,11 +104,12 @@ class TaskDialog(tk.Toplevel):
             label(area, text, 9, P["muted"]).pack(anchor="w")
             widget(area, variable).pack(fill="x", pady=(6, 12))
         self.priority_var = tk.IntVar(value=task["priority"] if task else 0)
-        tk.Checkbutton(frame, text=tr('标为重要'), variable=self.priority_var, bg=P["paper"], fg=P["ink"], activebackground=P["paper"], font=(FONT, 10), anchor="w").pack(fill="x", pady=(0, 10))
-        label(frame, tr('Enter 保存待办'), 9, P["muted"]).pack(anchor="w", pady=(6, 0))
+        tk.Checkbutton(frame, text=tr('标为重要'), variable=self.priority_var, bg=P["paper"], fg=P["ink"], activebackground=P["paper"], font=(FONT, 10), anchor="w").pack(anchor='w')
+        self.error_label = label(frame, '', 9, P['red'], wraplength=460, justify='left')
+        self.error_label.pack(anchor='w', pady=(4, 0))
         if task:
             button(controls, tr('删除'), self.remove, fg=P["red"]).pack(side="left")
-        button(controls, tr('保存待办'), self.save, primary=True).pack(side="right")
+        button(controls, tr('保存'), self.save, primary=True).pack(side="right")
         button(controls, tr('取消'), self.destroy).pack(side="right", padx=10)
         self.bind("<Escape>", lambda event: self.destroy())
         self.bind("<Return>", self.save_key)
@@ -100,7 +135,7 @@ class TaskDialog(tk.Toplevel):
             self.app.store.save_task(data, self.task["id"] if self.task else None, self.task["version"] if self.task else None)
         except Exception as error:
             self.saving = False
-            messagebox.showerror(tr('还没有保存'), str(error), parent=self)
+            self.error_label.configure(text=str(error))
             return
         if not self.task:
             self.app.quick_var.set("")
@@ -110,15 +145,10 @@ class TaskDialog(tk.Toplevel):
         self.destroy()
 
     def remove(self):
-        if messagebox.askyesno(tr('删除待办'), tr('删除这条待办？\n\n') + self.task["title"], parent=self):
-            try:
-                self.app.store.delete_task(self.task["id"], self.task["version"])
-            except Exception as error:
-                messagebox.showerror(tr('未删除'), str(error), parent=self)
-                return
-            self.app.refresh()
-            self.app.notice(tr('已删除待办'))
+        if self.app.remove_task(self.task):
             self.destroy()
+        else:
+            self.error_label.configure(text=self.app.task_error)
 
 
 class PlannerApp(tk.Tk):
@@ -156,6 +186,9 @@ class PlannerApp(tk.Tk):
         self.save_job = None
         self.clock_job = None
         self.notice_job = None
+        self.deleted_tasks = []
+        self.task_undo_bars = []
+        self.task_error = ''
         self.quick_var = tk.StringVar()
         self.quick_time_var = tk.StringVar()
         install_styles(self)
@@ -247,6 +280,7 @@ class PlannerApp(tk.Tk):
         self.tasks_scroll.pack(fill="both", expand=True)
         self.task_summary = label(self.task_panel, size=9, color=P["muted"])
         self.task_summary.pack(anchor="w", pady=(12, 0))
+        TaskUndoBar(self.task_panel, self, fill='x', pady=(8, 0), before=self.task_summary)
         self.overdue_button = button(self.task_panel, "", self.all_tasks)
         self.note_panel = tk.Frame(self.detail, bg=P["paper"])
         label(self.note_panel, tr('想法、进展、感受，都可以留在这里。'), 9, P["muted"]).pack(anchor="w", pady=(0, 10))
@@ -421,8 +455,12 @@ class PlannerApp(tk.Tk):
         row.pack(fill="x", pady=(0, 9) if card else 0)
         check = tk.Button(row, text="✓" if task["done"] else "○", command=lambda: self.toggle(task), fg=P["green"] if task["done"] else P["muted"], bg=P["paper"], activebackground=P["pale"], borderwidth=0, font=(FONT, 17), width=2, cursor="hand2")
         check.pack(side="left", anchor="n")
-        edit = tk.Button(row, text="···", command=lambda: self.open_editor(task, owner=parent.winfo_toplevel()), fg=P["muted"], bg=P["paper"], relief="flat", font=(FONT, 12), width=2, cursor="hand2")
-        edit.pack(side="right", anchor="n")
+        actions = tk.Frame(row, bg=P['paper'])
+        actions.pack(side='right', anchor='n', padx=(8, 0))
+        for text, command in ((tr('编辑'), lambda: self.open_editor(task, owner=parent.winfo_toplevel())),
+                              (tr('删除'), lambda: self.remove_task(task))):
+            button(actions, text, command, bg=P['paper'], fg=P['muted'],
+                   font=(FONT, 9), padx=6, pady=3).pack(anchor='e')
         content = tk.Frame(row, bg=P["paper"])
         content.pack(side="left", fill="both", expand=True)
         title = label(content, task["title"], 11, P["muted"] if task["done"] else P["ink"], wraplength=245, justify="left", anchor="w")
@@ -451,6 +489,43 @@ class PlannerApp(tk.Tk):
         except Exception as error:
             messagebox.showerror(tr('未能更新'), str(error), parent=self)
             self.refresh()
+
+    def refresh_task_undo(self):
+        self.task_undo_bars = [bar for bar in self.task_undo_bars if bar.winfo_exists()]
+        for bar in self.task_undo_bars:
+            bar.refresh()
+
+    def remove_task(self, task):
+        try:
+            deleted = self.store.delete_task(task['id'], task['version'])
+        except Exception as error:
+            self.task_error = str(error)
+            self.refresh_task_undo()
+            self.refresh()
+            return False
+        self.deleted_tasks.append(deleted)
+        self.task_error = ''
+        self.refresh_task_undo()
+        self.refresh()
+        return True
+
+    def undo_task_delete(self):
+        if not self.deleted_tasks:
+            return
+        try:
+            self.store.restore_task(self.deleted_tasks[-1])
+        except Exception as error:
+            self.task_error = str(error)
+            # A sync may already have restored this identity. Keep that record
+            # intact and allow undoing earlier deletions instead of getting stuck.
+            if self.store.db.execute('SELECT 1 FROM planner_tasks WHERE id=?',
+                                     (self.deleted_tasks[-1]['id'],)).fetchone():
+                self.deleted_tasks.pop()
+        else:
+            self.deleted_tasks.pop()
+            self.task_error = ''
+        self.refresh_task_undo()
+        self.refresh()
 
     def quick_enter(self, event):
         if ime_composing(event.widget):
@@ -601,6 +676,7 @@ class PlannerApp(tk.Tk):
         button(footer, tr('关闭'), self.all_window.destroy).pack(side="right")
         self.overview_count = label(footer, "", 9, P["muted"])
         self.overview_count.pack(side="left")
+        TaskUndoBar(self.all_window, self, side='bottom', fill='x', padx=28, pady=(8, 0), before=footer)
         self.all_scroll = ScrollFrame(self.all_window, bg=P["bg"])
         self.all_scroll.pack(fill="both", expand=True, padx=28)
         self.render_all_tasks()

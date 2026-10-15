@@ -101,9 +101,29 @@ class PlannerStore:
 
     def delete_task(self, identifier, expected_version):
         with self.db:
+            # Capture exactly the row being deleted for session-local undo.
+            self.db.execute("BEGIN IMMEDIATE")
+            previous = self.task(identifier)
             cursor = self.db.execute("DELETE FROM planner_tasks WHERE id=? AND version=?", (identifier, expected_version))
             if cursor.rowcount != 1:
                 raise ConflictError(tr('这条待办刚刚被更新，请重新打开后操作。'))
+        return previous
+
+    def restore_task(self, deleted):
+        data = self.validate_task(deleted)
+        with self.db:
+            # INSERT only: undo must never overwrite a record restored or changed
+            # by another connection/device. Preserve identity for GitHub sync.
+            cursor = self.db.execute(
+                "INSERT OR IGNORE INTO planner_tasks "
+                "(id,day,title,at_time,priority,notes,done,created_at,updated_at,version) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (deleted['id'], data['day'], data['title'], data['at_time'],
+                 data['priority'], data['notes'], data['done'], deleted['created_at'],
+                 now(), deleted['version'] + 1))
+            if cursor.rowcount != 1:
+                raise ConflictError(tr('这条待办已存在，未覆盖现有内容。'))
+        return self.task(deleted['id'])
 
     def note(self, day):
         date_field(day)
