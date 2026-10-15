@@ -10,7 +10,7 @@ from platform_support import wheel_units
 
 P = {"bg": "#F4F6F2", "paper": "#FFFFFF", "ink": "#273E34", "muted": "#738178",
      "line": "#E3E9E2", "green": "#2D6953", "pale": "#E7F0E8", "soft": "#F1F5EF",
-     "orange": "#AC7339", "red": "#AB5148"}
+     "orange": "#AC7339", "red": "#AB5148", "red_soft": "#FBEDEC", "red_hover": "#F4DAD7"}
 FONT = "PingFang SC" if sys.platform == 'darwin' else "Microsoft YaHei UI"
 
 
@@ -93,7 +93,7 @@ def center_window(window, owner, width, height):
     window.lift()
 
 
-def prepare_window(window, owner, title, size=(780, 640), minimum=(520, 360), escape=False, on_show=None):
+def prepare_window(window, owner, title, size=(780, 640), minimum=(520, 360), escape=False, on_show=None, fit_content=False):
     window.withdraw()
     window.title(title + tr(' · 拾光'))
     window.configure(bg=P["bg"])
@@ -111,7 +111,12 @@ def prepare_window(window, owner, title, size=(780, 640), minimum=(520, 360), es
     def show():
         if not window.winfo_exists() or not owner.winfo_exists():
             return
-        center_window(window, owner, *size)
+        display_size = size
+        if fit_content:
+            window.update_idletasks()
+            display_size = (max(size[0], window.winfo_reqwidth()),
+                            max(minimum[1], window.winfo_reqheight()))
+        center_window(window, owner, *display_size)
         if on_show:
             on_show()
     window.after_idle(show)
@@ -127,6 +132,7 @@ class SoftButton(tk.Frame):
     def __init__(self, parent, text, command, primary=False, **kwargs):
         self.fill = kwargs.pop("bg", P["green"] if primary else P["soft"])
         self.foreground = kwargs.pop("fg", "#FFFFFF" if primary else P["ink"])
+        self.hover_fill = kwargs.pop("hover_bg", None)
         self.label_text = text
         self.padx, self.pady = kwargs.pop("padx", 14), kwargs.pop("pady", 9)
         self.minimum_chars = kwargs.pop("width", 0)
@@ -171,7 +177,7 @@ class SoftButton(tk.Frame):
         disabled = self.state_value == "disabled"
         fill = P["soft"] if disabled else self.fill
         if self.hovered and not disabled:
-            fill = "#245A46" if self.foreground in {"white", "#FFFFFF"} else P["pale"]
+            fill = self.hover_fill or ("#245A46" if self.foreground in {"white", "#FFFFFF"} else P["pale"])
         foreground = P["muted"] if disabled else self.foreground
         self.native.configure(bg=fill, fg=foreground, activebackground=fill, activeforeground=foreground,
                               disabledforeground=P["muted"], cursor="arrow" if disabled else "hand2")
@@ -202,6 +208,8 @@ class SoftButton(tk.Frame):
             self.fill = kwargs.pop("bg")
         if "fg" in kwargs:
             self.foreground = kwargs.pop("fg")
+        if "hover_bg" in kwargs:
+            self.hover_fill = kwargs.pop("hover_bg")
         if "state" in kwargs:
             self.state_value = kwargs["state"]
         if kwargs:

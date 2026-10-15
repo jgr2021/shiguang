@@ -82,17 +82,16 @@ class TaskDialog(tk.Toplevel):
         super().__init__(owner)
         self.app, self.task = app, task
         self.saving = False
-        prepare_window(self, owner, tr('编辑待办') if task else tr('安排一件事'), (520, 340), (500, 330),
-                       on_show=lambda: (self.grab_set(), title_entry.focus_set()))
+        prepare_window(self, owner, tr('编辑待办') if task else tr('安排一件事'), (520, 280), (480, 200),
+                       on_show=lambda: (self.grab_set(), title_entry.focus_set()), fit_content=True)
         self.configure(bg=P['paper'])
-        controls = tk.Frame(self, bg=P["paper"], padx=22, pady=16)
-        controls.pack(side="bottom", fill="x")
-        frame = tk.Frame(self, bg=P["paper"], padx=22, pady=18)
-        frame.pack(fill="both", expand=True)
+        self.resizable(True, False)
+        frame = tk.Frame(self, bg=P["paper"], padx=22)
+        frame.pack(fill="x", pady=(18, 0))
         label(frame, tr('待办内容'), 9, P['muted']).pack(anchor="w")
         self.title_var = tk.StringVar(value=task["title"] if task else app.quick_var.get())
         title_entry = ttk.Entry(frame, textvariable=self.title_var, width=46, font=(FONT, 11))
-        title_entry.pack(fill="x", pady=(6, 16), ipady=4)
+        title_entry.pack(fill="x", pady=(6, 12), ipady=4)
         dates = tk.Frame(frame, bg=P["paper"])
         dates.pack(fill="x")
         self.day_var = tk.StringVar(value=task["day"] if task else (day or app.selected).isoformat())
@@ -106,15 +105,26 @@ class TaskDialog(tk.Toplevel):
         self.priority_var = tk.IntVar(value=task["priority"] if task else 0)
         tk.Checkbutton(frame, text=tr('标为重要'), variable=self.priority_var, bg=P["paper"], fg=P["ink"], activebackground=P["paper"], font=(FONT, 10), anchor="w").pack(anchor='w')
         self.error_label = label(frame, '', 9, P['red'], wraplength=460, justify='left')
-        self.error_label.pack(anchor='w', pady=(4, 0))
+        # Keep actions in the same flow as the fields. No stretchable spacer or
+        # invisible error row between the form and its buttons.
+        controls = tk.Frame(self, bg=P['paper'])
+        controls.pack(fill='x', padx=22, pady=(12, 16))
         if task:
-            button(controls, tr('删除'), self.remove, fg=P["red"]).pack(side="left")
+            button(controls, tr('删除'), self.remove, fg=P['red'], bg=P['red_soft'],
+                   hover_bg=P['red_hover']).pack(side="left")
         button(controls, tr('保存'), self.save, primary=True).pack(side="right")
         button(controls, tr('取消'), self.destroy).pack(side="right", padx=10)
         self.bind("<Escape>", lambda event: self.destroy())
         self.bind("<Return>", self.save_key)
         self.bind("<KP_Enter>", self.save_key)
         self.bind("<Control-Return>", self.save_key)
+
+    def show_error(self, text):
+        self.error_label.configure(text=text)
+        self.error_label.pack(anchor='w', pady=(6, 0))
+        self.update_idletasks()
+        # Only an actual error adds a line; keep all action buttons visible.
+        self.geometry(f'{self.winfo_width()}x{self.winfo_reqheight()}')
 
     def save_key(self, event):
         if event.widget.winfo_class() == 'TCombobox':
@@ -135,7 +145,7 @@ class TaskDialog(tk.Toplevel):
             self.app.store.save_task(data, self.task["id"] if self.task else None, self.task["version"] if self.task else None)
         except Exception as error:
             self.saving = False
-            self.error_label.configure(text=str(error))
+            self.show_error(str(error))
             return
         if not self.task:
             self.app.quick_var.set("")
@@ -148,7 +158,7 @@ class TaskDialog(tk.Toplevel):
         if self.app.remove_task(self.task):
             self.destroy()
         else:
-            self.error_label.configure(text=self.app.task_error)
+            self.show_error(self.app.task_error)
 
 
 class PlannerApp(tk.Tk):
@@ -455,12 +465,6 @@ class PlannerApp(tk.Tk):
         row.pack(fill="x", pady=(0, 9) if card else 0)
         check = tk.Button(row, text="✓" if task["done"] else "○", command=lambda: self.toggle(task), fg=P["green"] if task["done"] else P["muted"], bg=P["paper"], activebackground=P["pale"], borderwidth=0, font=(FONT, 17), width=2, cursor="hand2")
         check.pack(side="left", anchor="n")
-        actions = tk.Frame(row, bg=P['paper'])
-        actions.pack(side='right', anchor='n', padx=(8, 0))
-        for text, command in ((tr('编辑'), lambda: self.open_editor(task, owner=parent.winfo_toplevel())),
-                              (tr('删除'), lambda: self.remove_task(task))):
-            button(actions, text, command, bg=P['paper'], fg=P['muted'],
-                   font=(FONT, 9), padx=6, pady=3).pack(anchor='e')
         content = tk.Frame(row, bg=P["paper"])
         content.pack(side="left", fill="both", expand=True)
         title = label(content, task["title"], 11, P["muted"] if task["done"] else P["ink"], wraplength=245, justify="left", anchor="w")
@@ -478,6 +482,14 @@ class PlannerApp(tk.Tk):
             metadata.append(tr('有备注'))
         if metadata:
             label(content, " · ".join(metadata), 9, P["orange"] if task["priority"] else P["muted"]).pack(anchor="w", pady=(4, 0))
+        actions = tk.Frame(content, bg=P['paper'])
+        actions.pack(fill='x', pady=(8, 0))
+        button(actions, tr('删除'), lambda: self.remove_task(task),
+               bg=P['red_soft'], fg=P['red'], hover_bg=P['red_hover'],
+               font=(FONT, 10, 'bold'), width=5, padx=12, pady=9).pack(side='right')
+        button(actions, tr('编辑'), lambda: self.open_editor(task, owner=parent.winfo_toplevel()),
+               bg=P['pale'], fg=P['green'], hover_bg='#D8E8DC',
+               font=(FONT, 10, 'bold'), width=5, padx=12, pady=9).pack(side='right', padx=(0, 8))
         if not card:
             tk.Frame(parent, bg=P["line"], height=1).pack(fill="x")
 
