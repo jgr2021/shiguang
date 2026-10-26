@@ -6,11 +6,11 @@
 
 记下要做的事、突然的想法和每天的小小进展。没有网络，也能继续记录。
 
-[**⬇ 下载 Windows 安装版 · v1.9.4 预览版**](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-Setup-1.9.4-x64.exe)
+[**⬇ 下载 Windows 安装版 · v1.9.5 预览版**](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-Setup-1.9.5-x64.exe)
 
-[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-Windows-x64.zip)
+[看产品介绍](https://jgr2021.github.io/shiguang/) · [第一次使用](docs/QUICKSTART.md) · [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-Windows-x64.zip)
 
-**Mac 下载：** [Apple Silicon（M 系列）](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-macOS-arm64.dmg) · [Intel](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-macOS-x86_64.dmg) · [Mac 安装说明](MACOS-START.md)
+**Mac 下载：** [Apple Silicon（M 系列）](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-macOS-arm64.dmg) · [Intel](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-macOS-x86_64.dmg) · [Mac 安装说明](MACOS-START.md)
 
 Windows 10/11 x64 · macOS 15+ · 无需注册 · AI 可选
 
@@ -46,7 +46,7 @@ Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，
 ## 日历之外，给生活多留一点余地
 
 - **修改与删除，少几步。** 紧凑编辑窗口，绿色编辑、红色删除；误点后可在本次打开期间撤销。
-- **事情记在一起。** 查看今天、未来7天、过期或已完成的待办。
+- **事情记在一起。** 右上角集中查看本周（周一至周日）与今天前两天的待办；其他日期仍可从月历查看。
 - **日期和时间，点选就好。** 在当前窗口内点选日期与完整时间，支持全天事项。
 - **资料跟着日期走。** 同一份附件关联多天，旅行清单、课程资料、项目文档都能找回来。
 - **想不起完整标题，也能找找看。** 搜索标题、备注、可提取正文及常见近义词；目前不是语义向量搜索。
@@ -66,7 +66,7 @@ Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，
 
 以上为虚构示例数据，不包含个人档案。
 
-[查看 v1.9.4 更新说明](docs/RELEASE-v1.9.4.md)
+[查看 v1.9.5 更新说明](docs/RELEASE-v1.9.5.md)
 
 </details>
 
@@ -102,9 +102,9 @@ Mac 用户：下载对应芯片的 DMG，把 Shiguang.app 拖入 Applications，
 
 **会到点提醒、自动同步手机吗？** 当前没有到点弹窗提醒或手机版。GitHub 同步仍在预览阶段，尚未完成真实双设备验证；可继续在设置中导出备份。
 
-**现在是什么版本？** v1.9.4 预览版。Windows 安装包尚未签名；Mac 包没有 Apple Developer ID 签名或公证。本次已构建程序与分发包，未运行新版本自动化测试或完整界面验收；已核对单台 Windows 的文字记录与私有仓库一致，容量边界与双设备同步仍待验证。
+**现在是什么版本？** v1.9.5 预览版。Windows 安装包尚未签名；Mac 包没有 Apple Developer ID 签名或公证。本次已构建程序与分发包，未运行新版本自动化测试或完整界面验收；已核对单台 Windows 的文字记录与私有仓库一致，容量边界与双设备同步仍待验证。
 
-[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.9.4) · [本版完成范围与待验证事项](docs/QA-v1.9.4.md)
+[更多常见问题](docs/FAQ.md) · [版本更新与下载文件](https://github.com/jgr2021/shiguang/releases/tag/v1.9.5) · [本版完成范围与待验证事项](docs/QA-v1.9.5.md)
 
 ## 一起把它做得更顺手
 

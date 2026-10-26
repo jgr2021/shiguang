@@ -4,9 +4,9 @@
 
 一個放在電腦裡的日曆、日記本和資料夾。記下待辦、突然的想法和每天的小小進展。沒有網路，也能繼續記錄。
 
-**[下載 Windows 安裝版 · v1.9.4 預覽版](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-Setup-1.9.4-x64.exe)** · [免安裝 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-Windows-x64.zip)
+**[下載 Windows 安裝版 · v1.9.5 預覽版](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-Setup-1.9.5-x64.exe)** · [免安裝 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-Windows-x64.zip)
 
-**Mac：** [M 系列 DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-macOS-arm64.dmg) · [Intel DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-macOS-x86_64.dmg) · [安裝說明](../MACOS-START.md)
+**Mac：** [M 系列 DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-macOS-arm64.dmg) · [Intel DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-macOS-x86_64.dmg) · [安裝說明](../MACOS-START.md)
 
 Windows 10/11 x64 · macOS 15+ · 預覽版 · [简体中文](../README.md) · [English](README.en.md)
 
@@ -34,8 +34,12 @@ AI 需要網路與自己的服務商額度；使用助手時，問題、近期�
 
 目前為預覽版，Windows 尚未簽署，Mac 尚無 Apple Developer ID 簽署或公證。GitHub 私有儲存庫同步是選用功能，已內建公開應用程式設定；單附件50 MiB、目前附件總計500 MiB，Git 歷史另計。所有同步裝置需使用1.9.2或更新版本。已核對單台 Windows 文字記錄一致，Mac、容量邊界與雙裝置同步仍待驗證；本機使用無需登入。本次已建置，未執行新版自動化測試或完整介面驗收。尚無到點提醒、手機版、掃描文字辨識或內建網頁搜尋。
 
-[完整使用說明](../開始使用.txt) · [版本更新](https://github.com/jgr2021/shiguang/releases/tag/v1.9.4) · [回報問題](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml)
+[完整使用說明](../開始使用.txt) · [版本更新](https://github.com/jgr2021/shiguang/releases/tag/v1.9.5) · [回報問題](https://github.com/jgr2021/shiguang/issues/new?template=problem.yml)
 
 ## 編輯與刪除待辦
 
 點待辦旁的「編輯」開啟精簡表單，按 Enter 儲存。「刪除」直接移除，不彈出確認視窗。誤刪可在列表下方按「復原」，連續刪除可逐條復原；退出應用程式或切換帳號後，復原佇列會清空。
+
+## 本週待辦
+
+右上角只顯示當週（週一至週日）與今天前兩天的聯集，數量及所有分類使用相同範圍。2026年10月26日會顯示10月24日至11月1日。其他日期的待辦仍保留，可由月曆或搜尋查看。

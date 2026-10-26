@@ -8,10 +8,10 @@
 
 | 你想怎样使用 | 下载哪个 |
 | --- | --- |
-| 像普通软件一样安装，有桌面入口 | **[Windows 安装版（推荐）](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-Setup-1.9.4-x64.exe)** |
-| 解压到文件夹后运行 | [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-Windows-x64.zip) |
+| 像普通软件一样安装，有桌面入口 | **[Windows 安装版（推荐）](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-Setup-1.9.5-x64.exe)** |
+| 解压到文件夹后运行 | [免安装 ZIP](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-Windows-x64.zip) |
 
-Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-macOS-arm64.dmg) 或 [Intel DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.4/Shiguang-1.9.4-macOS-x86_64.dmg)，适用于 macOS 15+。打开 DMG，将 App 拖入 Applications；详见 [Mac 安装说明](../MACOS-START.md)。目前没有手机版。
+Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-macOS-arm64.dmg) 或 [Intel DMG](https://github.com/jgr2021/shiguang/releases/download/v1.9.5/Shiguang-1.9.5-macOS-x86_64.dmg)，适用于 macOS 15+。打开 DMG，将 App 拖入 Applications；详见 [Mac 安装说明](../MACOS-START.md)。目前没有手机版。
 
 - **安装版：** 下载 `.exe` 文件，按安装向导完成，然后打开桌面的“拾光日历”。
 - **ZIP：** 先完整解压，再双击 `Shiguang.exe`。把旁边的 `_internal` 文件夹留在原处。
@@ -32,6 +32,10 @@ Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](h
 
 待办保存到本机，不需要网络。日期与时间直接点选，支持全天事项。设置时间用于安排；当前版本没有到点弹窗提醒。
 
+### 右上角的本周待办
+
+只显示当前自然周（周一至周日）与今天前两天的并集。比如2026年10月26日显示10月24日至11月1日；顶部数量和窗口里的分类统计采用相同范围。选择月历中的其他日期不会改变这里所依据的今天，其他日期的记录仍保留。
+
 ### 修改或删除待办
 
 - 点待办下方的浅绿色 **编辑** 按钮，修改内容、日期或时间，按 Enter 保存。
@@ -51,7 +55,7 @@ Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](h
 | 想做的事 | 从哪里开始 |
 | --- | --- |
 | 记录明天或下周的安排 | 直接点日历上的日期 |
-| 看接下来还有什么没做 | 顶部“所有待办” |
+| 看接下来还有什么没做 | 顶部“本周待办” |
 | 把清单、课程资料或文档放到某天 | 右边“附件”；可关联多个日期或日期区间 |
 | 找以前记过的内容 | 顶部“搜索”，也可以试备注或正文里记得的几个词 |
 | 保存一份完整备份 | “设置 → 导出完整备份” |
@@ -61,7 +65,7 @@ Windows 安装包适用于 Windows 10/11 x64。Mac 用户选择 [M 系列 DMG](h
 
 **第一次设置同步：看 [普通用户上手与排错](SYNC-QUICKSTART.md)。** 创建私有仓库、授权选项、是否加入本机记录和成功提示都按顺序列出；普通用户不需要处理开发者密钥。
 
-不登录 GitHub 也能一直使用本机版。v1.9.4 的「设置 → 账号与同步」是可选预览入口，已内置公开 GitHub App 配置。需要同步时登录并授权自己的私有仓库；单附件50 MiB、合计500 MiB，所有同步设备需一起升级。Mac 与双设备同步仍待验证。不需要同步时可以直接跳过。详情见 [GitHub 同步说明](../GitHub同步说明.md)。
+不登录 GitHub 也能一直使用本机版。v1.9.5 的「设置 → 账号与同步」是可选预览入口，已内置公开 GitHub App 配置。需要同步时登录并授权自己的私有仓库；单附件50 MiB、合计500 MiB，所有同步设备需一起升级。Mac 与双设备同步仍待验证。不需要同步时可以直接跳过。详情见 [GitHub 同步说明](../GitHub同步说明.md)。
 
 ## 想试试 AI？
 

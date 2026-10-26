@@ -64,11 +64,11 @@ Mac 新安装默认放在 `~/Library/Application Support/Shiguang/data`，密钥
 
 ## 下载的几个 ZIP 有什么区别？
 
-`Shiguang-1.9.4-Windows-x64.zip` 是程序，完整解压后打开 `Shiguang.exe`。GitHub 的 `Source code (zip)` 和 `Code → Download ZIP` 是源代码，普通使用者无需下载。
+`Shiguang-1.9.5-Windows-x64.zip` 是程序，完整解压后打开 `Shiguang.exe`。GitHub 的 `Source code (zip)` 和 `Code → Download ZIP` 是源代码，普通使用者无需下载。
 
 ## 这版还有哪些限制？
 
-目前是未签名预览版，尚未完成全新电脑安装/卸载及所有输入法、显示器组合验证。没有内置网页搜索、扫描件 OCR 和自动更新。Codex、GitHub、ChatGPT、WorkBuddy 的其他工作记录尚未自动同步。[本版完成范围](QA-v1.9.4.md)。
+目前是未签名预览版，尚未完成全新电脑安装/卸载及所有输入法、显示器组合验证。没有内置网页搜索、扫描件 OCR 和自动更新。Codex、GitHub、ChatGPT、WorkBuddy 的其他工作记录尚未自动同步。[本版完成范围](QA-v1.9.5.md)。
 
 ## 怎样反馈？
 
