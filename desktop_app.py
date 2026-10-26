@@ -14,6 +14,7 @@ from diary import TZ
 from file_store import FileStore
 from ui_extras import Features
 from schedule_widgets import DateField, TimeField
+from task_scope import overview_bounds
 from calendar_cells import CalendarDayCell, day_preview
 from chat_keys import ime_composing
 from holiday_calendar import holiday_info
@@ -226,7 +227,7 @@ class PlannerApp(tk.Tk):
         header = tk.Frame(self, bg=P["bg"], padx=24, pady=10)
         header.pack(fill="x")
         button(header, tr('设置'), self.features.settings).pack(side="right", padx=(0, 10))
-        self.open_button = button(header, tr('所有待办'), self.all_tasks)
+        self.open_button = button(header, tr('本周待办'), self.all_tasks)
         self.open_button.pack(side="right", padx=(0, 10))
         button(header, tr('拾光助手'), self.features.chat, primary=True).pack(side="right", padx=(0, 10))
         button(header, tr('搜索'), self.features.search).pack(side="right", padx=(0, 10))
@@ -429,11 +430,15 @@ class PlannerApp(tk.Tk):
             self.day_description.configure(text=prefix + holiday['description'], wraplength=290, justify='left')
         self.render_tasks()
         self.features.render_files()
-        total, overdue = self.store.db.execute("SELECT count(*),coalesce(sum(day<?),0) FROM planner_tasks WHERE done=0", (today().isoformat(),)).fetchone()
-        self.open_button.configure(text=tr('所有待办  {0}', total))
+        current = today()
+        start, end = overview_bounds(current)
+        total, overdue = self.store.db.execute(
+            "SELECT count(*),coalesce(sum(day<?),0) FROM planner_tasks "
+            "WHERE done=0 AND day>=? AND day<=?", (current.isoformat(), start, end)).fetchone()
+        self.open_button.configure(text=tr('本周待办  {0}', total))
         self.overdue_button.pack_forget()
         if overdue:
-            self.overdue_button.configure(text=tr('另有 {0} 项过期待办  ›', overdue))
+            self.overdue_button.configure(text=tr('本周范围内 {0} 项过期待办  ›', overdue))
             self.overdue_button.pack(fill="x", pady=(12, 0))
         if hasattr(self, "all_window") and self.all_window.winfo_exists():
             self.render_all_tasks()
@@ -661,13 +666,15 @@ class PlannerApp(tk.Tk):
             self.all_window.lift()
             self.render_all_tasks()
             return
-        self.all_window = new_window(self, tr('所有待办'), (840, 750), minimum=(690, 510), escape=True)
-        banner = heading(self.all_window, tr('所有待办'), tr('把每一天的安排，放在一起慢慢理清。'), tr('日程总览'))
+        self.all_window = new_window(self, tr('本周待办'), (840, 750), minimum=(690, 510), escape=True)
+        banner = heading(self.all_window, tr('本周待办'), eyebrow=tr('日程总览'))
+        self.overview_range = label(banner, '', 10, P['muted'])
+        self.overview_range.pack(anchor='w', pady=(8, 0))
         button(banner, tr('+ 添加待办'), lambda: self.open_editor(owner=self.all_window, day=today()), True).place(relx=1, x=-28, y=36, anchor="ne")
         stats = tk.Frame(self.all_window, bg=P["bg"])
         stats.pack(fill="x", padx=28, pady=(0, 17))
         self.overview_stats = {}
-        for column, (key, title, color) in enumerate((("today", tr('今天待办'), P["green"]), ("upcoming", tr('未来7天'), P["ink"]), ("overdue", tr('已过期'), P["orange"]))):
+        for column, (key, title, color) in enumerate((("today", tr('今天待办'), P["green"]), ("upcoming", tr('本周接下来'), P["ink"]), ("overdue", tr('已过期'), P["orange"]))):
             stats.columnconfigure(column, weight=1, uniform="counts")
             card = tk.Frame(stats, bg=P["paper"], padx=18, pady=12)
             card.grid(row=0, column=column, sticky="ew", padx=(0, 10) if column < 2 else 0)
@@ -679,7 +686,7 @@ class PlannerApp(tk.Tk):
         filters.pack(fill="x", padx=26, pady=(0, 12))
         self.overview_filter, self.overview_limit = "open", 50
         self.overview_filters = {}
-        for key, title in (("open", tr('未完成')), ("today", tr('今天')), ("upcoming", tr('未来7天')), ("overdue", tr('已过期')), ("done", tr('已完成'))):
+        for key, title in (("open", tr('未完成')), ("today", tr('今天')), ("upcoming", tr('本周接下来')), ("overdue", tr('已过期')), ("done", tr('已完成'))):
             control = button(filters, title, lambda selected=key: self.filter_tasks(selected))
             control.pack(side="left", padx=(0, 6))
             self.overview_filters[key] = control
@@ -700,8 +707,11 @@ class PlannerApp(tk.Tk):
 
     def render_all_tasks(self):
         self.all_scroll.clear()
-        records = self.store.tasks()
-        current, end = today().isoformat(), (today() + timedelta(days=7)).isoformat()
+        current_day = today()
+        start, end = overview_bounds(current_day)
+        current = current_day.isoformat()
+        records = self.store.tasks(start, end)
+        self.overview_range.configure(text=tr('显示范围：{0} 至 {1}', start, end))
         open_tasks = [task for task in records if not task["done"]]
         groups = {"open": open_tasks,
                   "today": [task for task in open_tasks if task["day"] == current],
@@ -718,12 +728,12 @@ class PlannerApp(tk.Tk):
             tasks = sorted(tasks, key=lambda task: task["day"], reverse=True)
         self.overview_count.configure(text=tr('显示 {0} / {1} 件事 · 双击标题可编辑', min(len(tasks), self.overview_limit), len(tasks)))
         if not tasks:
-            title = tr('给接下来的日子，留一点期待') if not records else tr('这里暂时没有待办')
-            description = tr('从一件小事开始，安排、记录，再慢慢完成。') if not records else tr('试试其他分类，或为今天安排一件新事情。')
+            title = tr('这个范围内暂时没有待办') if not records else tr('这里暂时没有待办')
+            description = tr('其他日期的待办仍可在月历中查看。') if not records else tr('试试其他分类，或为今天安排一件新事情。')
             if self.overview_filter == "done":
                 title, description = tr('完成的事，会留在这里'), tr('每一个完成的小步骤，都值得被记住。')
             empty_state(self.all_scroll.inner, title, description,
-                        lambda: self.open_editor(owner=self.all_window, day=today()), tr('安排第一件事') if not records else tr('+ 添加待办'))
+                        lambda: self.open_editor(owner=self.all_window, day=today()), tr('+ 添加待办'))
             return
         previous = None
         for task in tasks[:self.overview_limit]:

@@ -1216,3 +1216,20 @@ TRADITIONAL.update({
     '已删除：{0}': '已刪除：{0}', '已删除 {0} 项': '已刪除 {0} 項',
     '这条待办已存在，未覆盖现有内容。': '這則待辦已存在，未覆寫現有內容。',
 })
+
+
+# Header overview: current calendar week plus the preceding two days.
+ENGLISH.update({
+    '本周待办': 'This week', '本周待办  {0}': 'This week  {0}',
+    '本周接下来': 'Later this week', '显示范围：{0} 至 {1}': 'Showing: {0} to {1}',
+    '本周范围内 {0} 项过期待办  ›': '{0} overdue in this view  ›',
+    '这个范围内暂时没有待办': 'No tasks in this date range',
+    '其他日期的待办仍可在月历中查看。': 'Tasks on other dates are still available in the calendar.',
+})
+TRADITIONAL.update({
+    '本周待办': '本週待辦', '本周待办  {0}': '本週待辦  {0}',
+    '本周接下来': '本週接下來', '显示范围：{0} 至 {1}': '顯示範圍：{0} 至 {1}',
+    '本周范围内 {0} 项过期待办  ›': '本週範圍內 {0} 項逾期待辦  ›',
+    '这个范围内暂时没有待办': '這個範圍內暫時沒有待辦',
+    '其他日期的待办仍可在月历中查看。': '其他日期的待辦仍可在月曆中查看。',
+})

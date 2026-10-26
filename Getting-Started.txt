@@ -1,4 +1,4 @@
-Shiguang 1.9.4 · Preview
+Shiguang 1.9.5 · Preview
 A little progress, every day.
 
 Pick dates from a calendar and times from hour/minute buttons. All-day events and one-minute adjustments are supported.

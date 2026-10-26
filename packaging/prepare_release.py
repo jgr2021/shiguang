@@ -71,8 +71,8 @@ def main():
         if any(part in forbidden for part in path.relative_to(stage).parts) or path.suffix.lower() in {".sqlite3", ".db", ".log"}:
             raise SystemExit("Private-data path found in release payload: " + path.name)
     manifest = [{"path": p.relative_to(stage).as_posix(), "bytes": p.stat().st_size, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths if p.is_file()]
-    (stage / "release-manifest.json").write_text(json.dumps({"version": "1.9.4", "languages": ["zh-CN", "zh-TW", "en"], "payload": "program-only", "personal_data_included": False, "files": manifest}, ensure_ascii=False, indent=2), encoding="utf-8")
-    portable = release / "Shiguang-1.9.4-Windows-x64.zip"
+    (stage / "release-manifest.json").write_text(json.dumps({"version": "1.9.5", "languages": ["zh-CN", "zh-TW", "en"], "payload": "program-only", "personal_data_included": False, "files": manifest}, ensure_ascii=False, indent=2), encoding="utf-8")
+    portable = release / "Shiguang-1.9.5-Windows-x64.zip"
     if not args.no_zip:
         with zipfile.ZipFile(portable, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
             for path in sorted(stage.rglob("*")):
